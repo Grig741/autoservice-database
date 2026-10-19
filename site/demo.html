@@ -1,0 +1,1608 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Демо — Журнал заявок</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@500;600;700;800&family=Geist+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff; --bg-1:#ffffff; --bg-2:#ffffff; --bg-3:#f1efec; --hover:#faf8f7;
+  --line:#e7e4e0; --line-2:#cfcac3;
+  --rail:#9b0d22; --rail-2:#86091c; --rail-ink:#ffffff; --rail-ink-2:#f7dfe3;
+  --text:#1b1917; --text-2:#4f4a44; --text-3:#6f6962;
+  --gold:#c8102e; --gold-2:#a30c25; --gold-dim:#eab3bc; --gold-ink:#ffffff;
+  --st-open:#3f5f86; --st-prog:#9a4f12; --st-bought:#2e7a4d; --st-closed:#66615b; --st-refused:#c8102e;
+  --danger:#b3261e;
+  --side:118px; --panel:600px;
+  --sans:"Geist",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:600 20px/1.45 var(--sans);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+h1,h2,h3,p,dl,dd{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0;text-align:inherit}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+svg.i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+/* ---------- controls ---------- */
+input,select,textarea{font-weight:600;width:100%;min-width:0;background:var(--bg-2);border:1px solid var(--line);border-radius:4px;padding:7px 10px;height:46px;color:var(--text)}
+textarea{height:auto;min-height:76px;resize:none;overflow:hidden;line-height:1.5;field-sizing:content}
+input::placeholder,textarea::placeholder{color:var(--text-3)}
+input:hover,select:hover,textarea:hover{border-color:var(--line-2)}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline-offset:0;border-color:var(--gold)}
+input[aria-invalid="true"],select[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--danger)}
+select{appearance:none;-webkit-appearance:none;padding-right:26px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a9a293' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+select option{background:var(--bg-2);color:var(--text)}
+label,.lab{display:block;font-size:15.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-3);margin-bottom:4px}
+.err{color:var(--danger);font-size:17px;margin-top:3px;min-height:0}
+.err:empty{display:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;color:var(--text);font-weight:700;white-space:nowrap;transition:transform .08s ease,opacity .12s ease}
+.btn:hover{background:var(--hover);border-color:var(--text-3)}
+.btn:active{transform:translateY(1px) scale(.98)}
+.btn[disabled]{opacity:.5;cursor:default}
+.btn.primary{background:var(--gold);border-color:var(--gold);color:var(--gold-ink);font-weight:700}
+.btn.primary:hover{background:var(--gold-2);border-color:var(--gold-2)}
+.btn.ghost{border-color:transparent;color:var(--text-2)}
+.btn.ghost:hover{color:var(--text)}
+.btn.danger{border-color:transparent;color:var(--danger)}
+.btn.danger:hover{border-color:var(--danger);background:transparent}
+.btn.icon{width:32px;padding:0}
+.btn.sm{height:32px;padding:0 8px;font-size:18.5px}
+.badge{font:700 14.5px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--gold);border:1px solid var(--gold-dim);border-radius:3px;padding:4px 6px}
+
+/* ---------- login ---------- */
+.login{min-height:100%;display:grid;grid-template-columns:minmax(0,5fr) minmax(320px,3fr)}
+.login-brand{padding:56px 48px;background:var(--rail);color:var(--rail-ink);display:flex;flex-direction:column;justify-content:space-between}
+.login-brand .mark{color:var(--rail-ink)}
+.login-brand .mark svg{width:28px;height:28px}
+.login-brand h1{font-size:64px;line-height:1.04;font-weight:800;letter-spacing:-.03em;max-width:9em}
+.login-brand h1::before{content:"";display:block;width:56px;height:3px;background:var(--rail-ink);margin-bottom:28px}
+.login-brand p{color:var(--rail-ink-2);font-size:20px;max-width:34em}
+.login-form{padding:56px 40px;display:flex;flex-direction:column;justify-content:center;gap:16px;background:var(--bg-1)}
+.login-form h2{font-size:32px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px}
+.login-form .btn{height:38px;margin-top:4px}
+.login-form input{height:38px}
+.form-msg{color:var(--danger);font-size:18.5px;border-left:1px solid var(--danger);padding-left:10px}
+.form-msg:empty{display:none}
+
+/* ---------- shell ---------- */
+.shell{display:grid;grid-template-columns:var(--side) minmax(0,1fr);min-height:100%}
+.side{position:sticky;top:0;height:100vh;height:100dvh;background:var(--rail);color:var(--rail-ink);display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:16px 10px 12px;z-index:5}
+.side .brand{display:grid;place-items:center;height:44px;color:var(--rail-ink);margin-bottom:16px;border-bottom:1px solid rgba(255,255,255,.18);padding-bottom:14px;height:58px}
+.side .brand svg{width:24px;height:24px;stroke-width:1.8}
+.nav-i{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 2px 9px;color:var(--rail-ink-2);font-size:16px;font-weight:700;width:100%;text-align:center;border-radius:12px;transition:background-color .12s ease,color .12s ease}
+.nav-i svg.i{width:21px;height:21px;stroke-width:1.8}
+.nav-i:hover{color:var(--rail-ink);background:rgba(255,255,255,.12)}
+.nav-i[aria-current="page"]{color:var(--rail);background:var(--rail-ink);box-shadow:0 1px 2px rgba(60,0,10,.25)}
+.nav-i[aria-current="page"]:hover{background:var(--rail-ink)}
+.nav-i:focus-visible{outline:2px solid var(--rail-ink);outline-offset:2px}
+.side-gap{flex:1}
+.main{min-width:0;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:14px;height:72px;padding:0 32px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:4}
+.top h1{font-size:34.5px;font-weight:800;letter-spacing:-.025em;line-height:1.1}
+.top .count{color:var(--text-3);font-size:17px}
+.top .sp{flex:1}
+.view{padding:0 32px 40px;min-width:0}
+
+/* ---------- toolbar ---------- */
+.bar{display:flex;align-items:flex-end;gap:10px;padding:14px 0 12px;flex-wrap:wrap}
+.bar .f{width:190px}
+.bar .f.wide{width:300px;max-width:100%}
+.bar .sp{flex:1}
+.bar .info{color:var(--text-3);font-size:17px;padding-bottom:8px}
+.only-m{display:none}
+
+/* ---------- grid list ---------- */
+.g{border-top:1px solid var(--line)}
+.g-row{display:grid;grid-template-columns:var(--cols);column-gap:12px;align-items:center;padding:0 8px;width:100%}
+.rq{--cols:58px 96px minmax(0,1.4fr) 124px minmax(0,1.4fr) 172px minmax(0,1.2fr) 104px 138px 112px}
+.cl{--cols:minmax(0,1.6fr) 120px 110px 60px 70px 110px}
+.g-head{padding-top:10px;padding-bottom:10px;border-bottom:1px solid var(--line);align-items:end;margin:0}
+.g-head .hc{min-width:0;margin:0}
+.g-head .hc>span{display:block;font-size:15.5px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--text-3);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-head input,.g-head select{height:32px;padding:3px 7px;font-size:18.5px;background-color:transparent}
+.g-head .nof{height:32px}
+.cl .g-head{padding-top:8px;padding-bottom:8px}
+.cl .g-head .hc>span{margin:0}
+.row{min-height:44px;padding-top:7px;padding-bottom:7px;border-bottom:1px solid var(--line);position:relative;font-size:19px}
+.row:hover{background:var(--hover)}
+.row.sel{background:#fdf3f4}
+.row.sel::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold)}
+.row:focus-visible{outline-offset:-2px}
+.row>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rq .row>.c-name,.rq .row>.c-model,.cl .row>.c-name{white-space:normal;overflow-wrap:break-word;hyphens:auto;-webkit-hyphens:auto}
+.row .c-id{color:var(--text-3);font-size:17.5px}
+.row .c-upd{color:var(--text-2);font-size:17.5px}
+.row .c-phone,.row .c-vin{font-size:17.5px}
+.row .c-vin{color:var(--text-2)}
+.row .c-model i{font-style:normal;color:var(--text-3);font-size:17.5px}
+.row .c-text{white-space:pre-line;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;color:var(--text-2);line-height:1.35}
+.row .c-status small{display:block;color:var(--text-3);font:600 15.5px/1.3 var(--mono);margin-top:4px;overflow:hidden;text-overflow:ellipsis}
+.row .c-src{display:flex;align-items:center;gap:6px;color:var(--text-2)}
+.row .c-src svg{width:15px;height:15px}
+.row .c-num{text-align:right}
+.row .c-upd small{display:block;font-size:16px;color:var(--text-3)}
+.c-money{text-align:right}
+.row .c-money b{font-weight:700;color:var(--gold);font-size:18.5px}
+.row .c-money small{display:block;font-size:16px;color:var(--text-3)}
+.dim{color:var(--text-3)}
+.st{display:inline-flex;align-items:center;max-width:100%;font-size:17.5px;line-height:1;font-weight:700;color:#fff;background:var(--c);border-radius:999px;padding:5px 10px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-open{--c:var(--st-open)} .st-in_progress{--c:var(--st-prog)} .st-bought{--c:var(--st-bought)} .st-closed{--c:var(--st-closed)} .st-refused{--c:var(--st-refused)}
+.pager{display:flex;align-items:center;gap:10px;padding:12px 8px 0;color:var(--text-2);font-size:17.5px}
+.pager .sp{flex:1}
+
+/* skeleton / empty / error */
+.sk{height:9px;border-radius:2px;background:var(--bg-3);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
+.state{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 16px;padding:56px 8px;max-width:520px}
+.state svg{grid-row:1/4;width:28px;height:28px;color:var(--text-3);margin-top:2px}
+.state h3{font-size:21px;font-weight:700}
+.state p{color:var(--text-2);font-size:19px}
+.state .acts{margin-top:12px;display:flex;gap:8px}
+.state.bad svg{color:var(--danger)}
+
+/* ---------- panel (slide-over) ---------- */
+.panel{position:fixed;top:0;right:0;bottom:0;width:min(var(--panel),100vw);background:var(--bg-1);border-left:1px solid var(--line-2);z-index:20;display:flex;flex-direction:column;transform:translateX(100%);visibility:hidden;transition:transform .2s cubic-bezier(.2,.7,.2,1),visibility 0s .2s}
+.panel.full{width:100vw;border-left:0}
+.panel.full .p-head,.panel.full .p-body,.panel.full .p-foot{padding-left:max(20px,calc((100vw - 1180px) / 2));padding-right:max(20px,calc((100vw - 1180px) / 2))}
+.panel.open{transform:none;visibility:visible;transition:transform .2s cubic-bezier(.2,.7,.2,1)}
+.p-head{display:flex;align-items:center;gap:10px;height:68px;padding:0 12px 0 20px;border-bottom:1px solid var(--line);flex:none}
+.p-head h2{font-size:28.5px;font-weight:800;letter-spacing:-.02em;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p-head h2 .mono{color:var(--text-3);font-weight:600;margin-left:6px}
+.p-form{display:flex;flex-direction:column;flex:1;min-height:0;margin:0}
+.p-body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:0 20px 24px}
+.blk{padding:18px 0 20px;border-bottom:1px solid var(--line)}
+.blk:last-child{border-bottom:0}
+.blk>h3{display:flex;align-items:baseline;gap:10px;font-size:21px;font-weight:800;margin-bottom:12px}
+.blk>h3 b{font:700 15.5px var(--mono);color:var(--gold)}
+.blk>h3 .note{font-weight:600;font-size:17px;color:var(--text-2);margin-left:auto;text-align:right}
+.fg{display:grid;gap:10px 12px;grid-template-columns:repeat(6,minmax(0,1fr))}
+.fg .f{grid-column:span 2;min-width:0}
+.fg .f.s3{grid-column:span 3} .fg .f.s4{grid-column:span 4} .fg .f.s6{grid-column:1/-1}
+.li{display:grid;column-gap:6px;row-gap:4px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li-head{display:grid;column-gap:6px;padding-bottom:2px}
+.li-head span{font-size:15.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-3)}
+.cars .li,.cars .li-head{grid-template-columns:22px minmax(0,1fr) minmax(0,1fr) 84px minmax(0,1.7fr) 28px}
+.cars .li .cm{grid-column:2/6}
+.parts .li,.parts .li-head{grid-template-columns:minmax(0,1.5fr) minmax(0,1.1fr) 64px 118px 118px 112px 28px}
+.parts .c-sum{text-align:right;font-size:18.5px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.parts .li-head span:nth-child(6){text-align:right}
+.li input{height:30px;font-size:18.5px}
+.li .m-lab{display:none}
+.li .err{grid-column:1/-1;margin:0}
+.li .x{width:28px;height:28px;display:grid;place-items:center;color:var(--text-3);border-radius:4px}
+.li .x:hover{color:var(--danger);background:var(--bg-2)}
+.li .x svg{width:15px;height:15px}
+.li input[type=radio]{min-height:0;appearance:none;-webkit-appearance:none;width:16px;height:16px;padding:0;border-radius:50%;border:1px solid var(--line-2);background:transparent;margin:0 auto;cursor:pointer}
+.li input[type=radio]:checked{border-color:var(--gold);background:radial-gradient(circle,var(--gold) 0 3.5px,transparent 4.5px)}
+.li.on input:not([type=radio]){border-color:var(--line-2)}
+.add{margin-top:8px}
+.seg{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);border-radius:4px;overflow:hidden;width:max-content;max-width:100%}
+.seg label{margin:0;text-transform:none;letter-spacing:0;font-size:18.5px;cursor:pointer;position:relative}
+.seg label span{display:flex;align-items:center;gap:6px;height:30px;padding:0 10px;color:var(--text-2);border-right:1px solid var(--line)}
+.seg label:last-child span{border-right:0}
+.seg svg{width:15px;height:15px}
+.seg input{min-height:0;position:absolute;opacity:0;width:1px;height:1px}
+.seg input:checked+span{background:var(--bg-3);color:var(--text)}
+.seg input:focus-visible+span{outline:2px solid var(--gold);outline-offset:-2px}
+.totals{display:grid;grid-template-columns:repeat(3,auto) 1fr;gap:4px 28px;margin-top:14px;padding-top:12px;border-top:1px solid var(--gold-dim);align-items:baseline}
+.totals dt{font-size:15.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-3);grid-row:1}
+.totals dd{font:700 22.5px var(--mono);grid-row:2;white-space:nowrap}
+.totals dd small{font-size:15.5px;color:var(--text-3);font-weight:600;margin-left:4px}
+.neg{color:var(--danger)}
+.imgs{display:flex;flex-wrap:wrap;gap:8px}
+.im{position:relative;width:76px;height:76px;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--bg-2)}
+.im img{width:100%;height:100%;object-fit:cover;display:block}
+.im button{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:3px;background:var(--bg);color:var(--text);display:grid;place-items:center;opacity:.9}
+.im button svg{width:13px;height:13px}
+.im-add{width:76px;height:76px;border:1px dashed var(--line-2);border-radius:4px;display:grid;place-items:center;color:var(--text-3);cursor:pointer;margin:0;position:relative}
+.im-add:hover{color:var(--text);border-color:var(--text-3)}
+.im-add input{min-height:0;position:absolute;inset:0;opacity:0;cursor:pointer;height:100%;padding:0}
+.im-add:focus-within{outline:2px solid var(--gold);outline-offset:2px}
+.p-foot{flex:none;border-top:1px solid var(--line);padding:12px 20px;padding-bottom:max(12px,env(safe-area-inset-bottom));display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--bg-1)}
+.p-foot .sp{flex:1}
+.p-foot .form-msg{flex-basis:100%}
+.p-foot .hint{color:var(--text-3);font-size:16px}
+.confirm{flex:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 20px;border-bottom:1px solid var(--gold-dim);background:var(--bg-2);font-size:18.5px}
+.confirm span{flex:1;min-width:160px}
+.kv{display:grid;grid-template-columns:120px minmax(0,1fr);gap:6px 12px;font-size:19px}
+.kv dt{color:var(--text-3)}
+.kv dd{min-width:0;overflow-wrap:anywhere}
+.hist{display:grid;grid-template-columns:62px 92px minmax(0,1fr) auto;column-gap:10px;row-gap:2px;align-items:baseline;width:100%;padding:9px 6px;border-top:1px solid var(--line);font-size:18.5px}
+.hist:hover{background:var(--bg-2)}
+.hist .t{grid-column:1/-1;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist .mono{font-size:17px;color:var(--text-2)}
+.carline{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-top:1px solid var(--line);font-size:19px;flex-wrap:wrap}
+.carline:first-of-type{border-top:0}
+.carline .mono{color:var(--text-2);font-size:17.5px}
+
+/* ---------- stats ---------- */
+.stats{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:0 56px;padding-top:8px}
+.hero .lab{margin-bottom:8px}
+.hero .big{font:700 79px/1 var(--mono);letter-spacing:-.04em;white-space:nowrap}
+.hero .big small{font-size:20px;color:var(--text-3);letter-spacing:0;margin-left:10px;font-weight:600}
+.hero .rule{height:3px;background:var(--gold);width:72px;margin:22px 0}
+.ledger{display:grid;grid-template-columns:minmax(0,1fr) auto;max-width:440px}
+.ledger dt,.ledger dd{padding:9px 0;border-bottom:1px solid var(--line)}
+.ledger dt{color:var(--text-2)}
+.ledger dd{font-family:var(--mono);text-align:right}
+.ledger dd small{color:var(--text-3);margin-left:4px;font-size:15.5px}
+.hero .foot{color:var(--text-3);font-size:17px;margin-top:14px;max-width:440px}
+.dist h3{font-size:15.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-3);margin:0 0 6px}
+.dist section+section{margin-top:28px}
+.d-row{display:grid;grid-template-columns:132px minmax(0,1fr) 44px;gap:12px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:19px}
+.d-row .track{height:6px;border-radius:3px;overflow:hidden;background:var(--bg-3)}
+.d-row .fill{height:100%;background:var(--c,var(--text-3));transform-origin:left;width:100%}
+.d-row .n{text-align:right;font-family:var(--mono);font-size:18.5px}
+.d-row .st{justify-self:start}
+.d-row .nm{display:flex;align-items:center;gap:6px;color:var(--text-2)}
+.d-row .nm svg{width:15px;height:15px}
+.chips{display:flex;gap:6px;padding-bottom:1px;flex-wrap:wrap}
+
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);opacity:0;background:var(--bg-3);border:1px solid var(--line-2);border-radius:4px;padding:8px 14px;font-size:18.5px;z-index:40;pointer-events:none;transition:transform .18s ease,opacity .18s ease}
+#toast.on{transform:translate(-50%,0);opacity:1}
+
+/* ---------- responsive ---------- */
+@media (min-width:1200px){
+  .shell.has-panel .main{margin-right:var(--panel)}
+  .shell.has-panel .rq{--cols:64px minmax(0,1fr) 104px minmax(0,1.1fr) 132px}
+  .shell.has-panel .rq .c-upd,.shell.has-panel .rq .c-money,.shell.has-panel .rq .c-vin,.shell.has-panel .rq .c-text,.shell.has-panel .rq .c-src{display:none}
+  .shell.has-panel .cl{--cols:minmax(0,1.6fr) 120px 70px}
+  .shell.has-panel .cl .c-type,.shell.has-panel .cl .c-cars,.shell.has-panel .cl .c-last{display:none}
+  .shell.has-panel .stats{grid-template-columns:minmax(0,1fr)}
+  .shell.has-panel .dist{margin-top:36px}
+}
+@media (max-width:1599px){
+  .rq{--cols:58px minmax(0,1.2fr) 134px minmax(0,1.2fr) 204px minmax(0,1.3fr) 112px 146px 120px}
+  .rq .c-upd{display:none}
+}
+@media (max-width:1399px){
+  .rq{--cols:58px minmax(0,1.2fr) 134px minmax(0,1.2fr) minmax(0,1.3fr) 112px 146px 120px}
+  .rq .c-vin{display:none}
+}
+@media (max-width:960px){
+  .rq{--cols:56px minmax(0,1fr) 104px minmax(0,1.1fr) 92px 136px 40px}
+  .rq .c-upd,.rq .c-text{display:none}
+  .rq .row .c-src b{display:none}
+  .stats{grid-template-columns:minmax(0,1fr)}
+  .dist{margin-top:36px}
+  .hero .big{font-size:62px}
+}
+@media (max-width:767px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .side{position:fixed;top:auto;left:0;right:0;bottom:0;height:auto;flex-direction:row;gap:6px;padding:6px 8px calc(6px + env(safe-area-inset-bottom));z-index:10}
+  .side .brand,.side-gap{display:none}
+  .nav-i{flex:1;padding:7px 2px 6px;border-radius:10px}
+  .main{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  .top{padding:0 16px;height:60px}
+  .top{gap:10px}
+  .top h1{font-size:25px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .top .btn.primary{padding:0 10px;font-size:17px}
+  .top .btn.primary{padding:0 12px;flex:none}
+  .p-head h2{font-size:25px}
+  .view{padding:0 16px 24px}
+  .only-m{display:inline-flex}
+  .bar .f{flex:1 1 130px;width:auto}
+  .bar .f.wide{flex-basis:100%}
+  .bar .info{flex-basis:100%;padding:0}
+  .btn,input,select{min-height:38px}
+  .g-head input,.g-head select{height:38px}
+
+  .rq .g-head{display:none;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 12px;padding:12px 0}
+  .rq.filters-open .g-head{display:grid}
+  .rq .g-head .c-upd,.rq .g-head .c-money{display:none}
+  .rq .g-head .c-vin,.rq .g-head .c-text{display:block}
+  .rq .g-head .c-text{grid-column:1/-1}
+  .rq .row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name status" "phone src" "model model" "vin vin" "text text" "money money" "id upd";row-gap:3px;padding:11px 0;align-items:baseline}
+  .rq .row>span{display:block}
+  .rq .row .c-src{display:flex;justify-self:end}
+  .rq .row .c-src b{display:inline}
+  .rq .row .c-id{grid-area:id} .rq .row .c-upd{grid-area:upd;text-align:right;color:var(--text-3)}
+  .rq .row .c-name{grid-area:name;font-weight:700;font-size:21px} .rq .row .c-phone{grid-area:phone;color:var(--text-2)}
+  .rq .row .c-model{grid-area:model} .rq .row .c-vin{grid-area:vin}
+  .rq .row .c-text{grid-area:text;display:-webkit-box;-webkit-line-clamp:3}
+  .rq .row .c-status{grid-area:status;justify-self:end;text-align:right}
+  .rq .row .c-status small{display:none}
+  .rq .row .c-src{grid-area:src}
+  .rq .row .c-vin:empty,.rq .row .c-text:empty,.rq .row .c-money:empty{display:none}
+  .rq .row .c-money{grid-area:money;text-align:left}
+  .rq .row .c-money small,.rq .row .c-upd small{display:inline;margin-left:8px}
+  .rq .row .c-money small::before{content:"прибыль ";font-family:var(--sans)}
+
+  .cl .g-head{display:none}
+  .cl .row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name req" "phone last";row-gap:3px;padding:11px 0}
+  .cl .row .c-name{grid-area:name;font-weight:700;font-size:21px} .cl .row .c-phone{grid-area:phone;color:var(--text-2)}
+  .cl .row .c-req{grid-area:req} .cl .row .c-last{grid-area:last;text-align:right;color:var(--text-3)}
+  .cl .row .c-type,.cl .row .c-cars{display:none}
+  .cl .row .c-req::after{content:" заявок";font-family:var(--sans);color:var(--text-3);font-size:17px}
+  .row.sel::before{left:-16px}
+  .p-head{height:60px}
+
+  .panel{border-left:0;z-index:30}
+  .p-body{padding:0 16px 20px}
+  .p-head{padding:0 8px 0 16px}
+  .p-foot{padding-left:16px;padding-right:16px}
+  .p-foot .hint{display:none}
+  .fg{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .fg .f,.fg .f.s3,.fg .f.s4{grid-column:span 1}
+  .fg .f.s6,.fg .f.full-m{grid-column:1/-1}
+  .li-head{display:none}
+  .li .m-lab{display:block;margin-bottom:3px}
+  .li input{height:38px}
+  .cars .li{grid-template-columns:28px minmax(0,1fr) minmax(0,1fr) 36px;padding:12px 0;align-items:end}
+  .cars .li .rd{grid-row:1/3;align-self:center}
+  .cars .li .c-make{grid-column:2} .cars .li .c-model{grid-column:3}
+  .cars .li .x{grid-column:4;grid-row:1;width:36px;height:38px}
+  .cars .li .c-year{grid-column:2} .cars .li .c-vin{grid-column:3/5}
+  .cars .li .cm{grid-column:2/5}
+  .parts .li{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 36px;padding:12px 0;align-items:end}
+  .parts .li .c-name{grid-column:1/4} .parts .li .x{grid-column:4;grid-row:1;width:36px;height:38px}
+  .parts .li .c-code{grid-column:1/4}
+  .parts .li .c-qty{grid-column:1;grid-row:3} .parts .li .c-buy{grid-column:2;grid-row:3} .parts .li .c-sell{grid-column:3/5;grid-row:3}
+  .parts .li .c-sum{grid-column:1/5;grid-row:4;display:flex;justify-content:space-between;align-items:baseline}
+  .parts .li .c-sum .m-lab{margin:0}
+  .totals{grid-template-columns:1fr auto;gap:6px 12px}
+  .totals dt,.totals dd{grid-row:auto}
+  .totals dd{text-align:right}
+  .login{grid-template-columns:minmax(0,1fr)}
+  .login-brand{padding:32px 24px 28px;gap:28px}
+  .login-brand h1{font-size:45.5px}
+  .login-form{padding:28px 24px 40px;justify-content:flex-start}
+  .hero .big{font-size:51px}
+  .hero .big small{display:block;margin:8px 0 0}
+  .d-row{grid-template-columns:104px minmax(0,1fr) 36px}
+  .kv{grid-template-columns:96px minmax(0,1fr)}
+  #toast{bottom:calc(88px + env(safe-area-inset-bottom))}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .sk{opacity:.7}
+}
+
+/* bold+big pass: mono numbers bolder, placeholders lighter */
+.mono,[class*=mono]{font-weight:600}
+::placeholder{font-weight:500}
+.demo-bar{display:flex;justify-content:center;align-items:center;gap:16px;flex-wrap:wrap;background:#1b1917;color:#fff;font:600 15px/1.3 var(--sans);padding:8px 16px;text-align:center}
+.demo-bar a{color:#fff;text-decoration:underline;text-underline-offset:3px}
+</style>
+</head>
+<body>
+<div class="demo-bar"><span>Демо-версия · данные вымышленные и сбрасываются при обновлении страницы</span><a href="./">На главную</a></div>
+
+<!-- ============ sign-in ============ -->
+<div id="login" class="login" hidden>
+  <div class="login-brand">
+    <div class="mark" data-i="wrench"></div>
+    <h1>Журнал заявок автосервиса</h1>
+    <p>Клиенты, автомобили, заявки, запчасти и прибыль в одном рабочем окне. Доступ только для владельца.</p>
+  </div>
+  <form id="login-form" class="login-form" novalidate>
+    <h2>Вход</h2>
+    <div class="f">
+      <label for="li-email">Эл. почта</label>
+      <input id="li-email" name="email" type="email" autocomplete="username" inputmode="email" required>
+      <p class="err" data-err="email"></p>
+    </div>
+    <div class="f">
+      <label for="li-pass">Пароль</label>
+      <input id="li-pass" name="password" type="password" autocomplete="current-password" required>
+      <p class="err" data-err="password"></p>
+    </div>
+    <p class="form-msg" id="login-msg" role="alert"></p>
+    <button class="btn primary" type="submit" id="login-btn">Войти</button>
+  </form>
+</div>
+
+<!-- ============ app ============ -->
+<div id="app" class="shell" hidden>
+  <nav class="side" aria-label="Разделы">
+    <div class="brand" data-i="wrench" aria-hidden="true"></div>
+    <button type="button" class="nav-i" data-view="requests" aria-current="page"><span data-i="list"></span><span>Заявки</span></button>
+    <button type="button" class="nav-i" data-view="clients"><span data-i="users"></span><span>Клиенты</span></button>
+    <button type="button" class="nav-i" data-view="stats"><span data-i="chart"></span><span>Статистика</span></button>
+    <div class="side-gap"></div>
+    <button type="button" class="nav-i" id="signout" hidden><span data-i="logout"></span><span>Выйти</span></button>
+  </nav>
+
+  <main class="main">
+    <header class="top">
+      <h1 id="view-title">Заявки</h1>
+      <span class="badge" id="demo-badge" hidden title="Демо-режим: данные в памяти, после перезагрузки сбрасываются">Demo</span>
+      <span class="sp"></span>
+      <button type="button" class="btn primary" id="btn-new"><span data-i="plus"></span>Новая заявка</button>
+    </header>
+
+    <!-- requests -->
+    <section class="view" id="v-requests" aria-labelledby="view-title">
+      <form class="bar" id="rq-bar" autocomplete="off">
+        <div class="f"><label for="rq-from">Обновлено с</label><input id="rq-from" name="from" type="date" class="mono"></div>
+        <div class="f"><label for="rq-to">по</label><input id="rq-to" name="to" type="date" class="mono"></div>
+        <button type="button" class="btn only-m" id="rq-ftoggle" aria-expanded="false" aria-controls="rq-filters"><span data-i="filter"></span><span id="rq-fcount">Фильтры</span></button>
+        <button type="button" class="btn ghost" id="rq-reset" hidden><span data-i="x"></span>Сбросить</button>
+        <span class="sp"></span>
+        <span class="info mono" id="rq-info" aria-live="polite"></span>
+      </form>
+      <div class="g rq" id="rq-grid">
+        <form class="g-row g-head" id="rq-filters" autocomplete="off">
+          <label class="hc c-id"><span>ID</span><input name="id" inputmode="numeric" class="mono"></label>
+          <div class="hc c-upd"><span>Обновлено</span><div class="nof"></div></div>
+          <label class="hc c-name"><span>Имя</span><input name="name"></label>
+          <label class="hc c-phone"><span>Телефон</span><input name="phone" inputmode="tel" class="mono"></label>
+          <label class="hc c-model"><span>Автомобиль</span><input name="model"></label>
+          <label class="hc c-vin"><span>VIN</span><input name="vin" class="mono"></label>
+          <label class="hc c-text"><span>Заявка</span><input name="text" title="Текст заявки, названия и коды запчастей"></label>
+          <div class="hc c-money"><span>Сумма</span><div class="nof"></div></div>
+          <label class="hc c-status"><span>Статус</span><select name="status" id="rq-f-status"></select></label>
+          <label class="hc c-src"><span>Источник</span><select name="source" id="rq-f-source"></select></label>
+          <button type="submit" class="sr" tabindex="-1">Применить</button>
+        </form>
+        <div id="rq-rows"></div>
+      </div>
+      <div class="pager" id="rq-pager" hidden></div>
+    </section>
+
+    <!-- clients -->
+    <section class="view" id="v-clients" hidden>
+      <form class="bar" id="cl-bar" autocomplete="off">
+        <div class="f wide"><label for="cl-q">Поиск по имени или телефону</label><input id="cl-q" name="q" type="search"></div>
+        <span class="sp"></span>
+        <span class="info mono" id="cl-info" aria-live="polite"></span>
+      </form>
+      <div class="g cl">
+        <div class="g-row g-head">
+          <div class="hc c-name"><span>Клиент</span></div>
+          <div class="hc c-phone"><span>Телефон</span></div>
+          <div class="hc c-type"><span>Тип</span></div>
+          <div class="hc c-cars"><span>Авто</span></div>
+          <div class="hc c-req"><span>Заявок</span></div>
+          <div class="hc c-last"><span>Последняя</span></div>
+        </div>
+        <div id="cl-rows"></div>
+      </div>
+      <div class="pager" id="cl-pager" hidden></div>
+    </section>
+
+    <!-- stats -->
+    <section class="view" id="v-stats" hidden>
+      <form class="bar" id="st-bar" autocomplete="off">
+        <div class="f"><label for="st-from">Период с</label><input id="st-from" name="from" type="date" class="mono"></div>
+        <div class="f"><label for="st-to">по</label><input id="st-to" name="to" type="date" class="mono"></div>
+        <div class="chips">
+          <button type="button" class="btn sm" data-preset="0">Сегодня</button>
+          <button type="button" class="btn sm" data-preset="7">7 дней</button>
+          <button type="button" class="btn sm" data-preset="30">30 дней</button>
+          <button type="button" class="btn sm" data-preset="all">Всё время</button>
+        </div>
+      </form>
+      <div id="st-body"></div>
+    </section>
+  </main>
+
+  <aside id="panel" class="panel" role="dialog" aria-modal="false" aria-labelledby="panel-title" tabindex="-1" inert></aside>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+
+<script>
+/* =====================================================================
+   CONFIG - paste your Supabase project values here.
+   Both empty  -> DEMO MODE (in-memory seed data, no login).
+   ===================================================================== */
+const SUPABASE_URL = '';
+const SUPABASE_ANON_KEY = '';
+
+(function () {
+'use strict';
+
+const DEMO = !SUPABASE_URL || !SUPABASE_ANON_KEY;
+const PAGE = 50;
+const BUCKET = 'request-images';
+
+const STATUSES = { open: 'Открыта', in_progress: 'В работе', bought: 'Куплено', closed: 'Закрыта', refused: 'Отказ' };
+const SOURCES = { phone: 'Телефон', visit: 'Визит', whatsapp: 'WhatsApp', instagram: 'Instagram', website: 'Сайт' };
+const SOURCE_ICON = { phone: 'phone', visit: 'door', whatsapp: 'chat', instagram: 'camera', website: 'globe' };
+const CLIENT_TYPES = { private: 'Частное лицо', sto: 'СТО', shop: 'Магазин' };
+const SOLD = ['bought', 'closed'];
+
+/* ---------- icons: one stroke width (1.5), 24px grid ---------- */
+const ICONS = {
+  wrench: '<path d="M14.7 6.3a4 4 0 0 0 5 5l-9.6 9.6a2.1 2.1 0 0 1-3-3l9.6-9.6a4 4 0 0 0-2-2Z"/><path d="M14.7 6.3 17 4a4.5 4.5 0 0 0-5.6 5.6"/>',
+  list: '<path d="M8 6h12M8 12h12M8 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.6a6.5 6.5 0 0 1 3 5.4"/>',
+  chart: '<path d="M4 20V4"/><path d="M4 20h16"/><path d="M8 16v-5M12 16V8M16 16v-3"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  phone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/>',
+  door: '<path d="M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17"/><path d="M3 21h18"/><path d="M14 12h.01"/>',
+  chat: '<path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.6-5.2A8.5 8.5 0 1 1 21 11.5Z"/>',
+  camera: '<rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><circle cx="12" cy="12" r="3.8"/><path d="M17 7h.01"/>',
+  globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><path d="M12 3.5c2.6 2.4 2.6 14.6 0 17M12 3.5c-2.6 2.4-2.6 14.6 0 17"/>',
+  logout: '<path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3"/><path d="M15 16l4-4-4-4"/><path d="M19 12H9"/>',
+  filter: '<path d="M4 6h16M7 12h10M10 18h4"/>',
+  trash: '<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/>',
+  prev: '<path d="m14 6-6 6 6 6"/>',
+  next: '<path d="m10 6 6 6-6 6"/>',
+  alert: '<path d="M12 4 2.5 20h19L12 4Z"/><path d="M12 10v4M12 17h.01"/>',
+  inbox: '<path d="M4 13 6.5 5h11L20 13v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-5Z"/><path d="M4 13h4.5l1 2h5l1-2H20"/>',
+  image: '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m4 17 5-4 4 3 3-2 4 3"/>'
+};
+const icon = n => '<svg class="i" viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[n] || '') + '</svg>';
+
+/* ---------- helpers ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const digits = v => String(v == null ? '' : v).replace(/\D/g, '');
+const pad = n => String(n).padStart(2, '0');
+const toInt = v => { const n = parseInt(digits(v), 10); return isNaN(n) ? 0 : n; };
+const fmtInt = n => Math.round(Number(n) || 0).toLocaleString('ru-RU');
+const money = n => fmtInt(n) + '<small>AMD</small>';
+const fmtDT = iso => { if (!iso) return ''; const d = new Date(iso); return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + String(d.getFullYear()).slice(2) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+const fmtD = iso => { if (!iso) return ''; const d = new Date(iso); return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear(); };
+const fmtPhone = p => { const s = digits(p); return s.length === 9 ? s.slice(0, 3) + ' ' + s.slice(3, 6) + ' ' + s.slice(6) : s; };
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const dayStart = s => new Date(s + 'T00:00:00').toISOString();
+const dayEnd = s => { const d = new Date(s + 'T00:00:00'); d.setDate(d.getDate() + 1); return d.toISOString(); };
+const debounce = (fn, ms) => { let t; return function () { const a = arguments; clearTimeout(t); t = setTimeout(() => fn.apply(null, a), ms); }; };
+const who = s => (s || '').split('@')[0];
+const fullName = c => ((c.first_name || '') + ' ' + (c.last_name || '')).trim();
+const carLabel = k => k ? [k.make, k.model, k.year].filter(Boolean).join(' ') : '';
+const opts = (map, cur, all) => (all ? '<option value="">' + esc(all) + '</option>' : '') + Object.keys(map).map(k => '<option value="' + k + '"' + (k === cur ? ' selected' : '') + '>' + esc(map[k]) + '</option>').join('');
+let uid = 0; const key = () => 'k' + (++uid);
+/* Any thrown value or Supabase error object -> one short Russian sentence. */
+function errMsg(e) {
+  const code = e && e.code ? String(e.code) : '', raw = String((e && (e.message || e.error_description || e.msg)) || e || '');
+  const m = raw.toLowerCase();
+  if (/failed to fetch|networkerror|load failed|network request failed|fetch failed/.test(m)) return 'Нет связи с сервером. Проверьте интернет';
+  if (/invalid login credentials|invalid_credentials/.test(m)) return 'Неверная почта или пароль';
+  if (/email not confirmed/.test(m)) return 'Почта пользователя не подтверждена в Supabase';
+  if (code === 'PGRST301' || /jwt expired|invalid jwt/.test(m)) return 'Сессия истекла. Войдите заново';
+  if (code === '42501' || /row-level security|permission denied|not authorized/.test(m)) return 'Нет доступа. Войдите заново';
+  if (code === '23505' || /duplicate key/.test(m)) return 'Клиент с таким телефоном уже существует';
+  if (code === '23503') return 'Нельзя удалить: есть связанные записи';
+  if (code === '23514' || code === '23502') return 'База отклонила данные: проверьте поля';
+  if (/[а-яё]/i.test(raw)) return raw;
+  return 'Ошибка сервера. Попробуйте ещё раз';
+}
+
+/* =====================================================================
+   DATA LAYER - one interface, two implementations.
+   listRequests(filters, page) -> { rows, total }
+   getRequest(id)              -> { request, client, cars, parts, images }
+   findClientByPhone(phone)    -> { client, cars } | null
+   saveRequest(payload)        -> id
+   deleteRequest(id)
+   listClients(q, page)        -> { rows, total }
+   getClient(id)               -> { client, cars, requests }
+   stats(from, to)             -> { total, by_status, by_source, revenue, cost, sold }
+   ===================================================================== */
+
+/* ---------- demo implementation (memory only) ---------- */
+function createDemoStore() {
+  const H = 3600e3, now = Date.now();
+  const clients = [], cars = [], requests = [], parts = [], images = [];
+  const seq = { c: 0, k: 0, r: 39667, p: 0, i: 0 };
+  const C = [
+    ['098499997', 'Армен', 'Саргсян', 'private', 'Ереван, ул. Комитаса 14', 'armen.sargsyan@mail.am', '', [['Toyota', 'Camry', 2018, '4T1B11HK5JU123456', 'Белая, 2.5'], ['Toyota', 'Corolla', 2011, 'JTDBU4EE9B9123456', 'Машина жены']]],
+    ['091234508', 'Гагик', 'Петросян', 'sto', 'Ереван, ул. Арцаха 62/4', 'gagik@petrosyan-sto.am', 'СТО, берёт оптом, скидка 7%', [['Mercedes-Benz', 'E 200', 2015, 'WDD2120341A987654', 'W212'], ['Mercedes-Benz', 'C 180', 2012, 'WDD2040311A654321', 'W204, клиентская']]],
+    ['077556120', 'Нарек', 'Овсепян', 'private', 'Абовян, ул. Ханрапетутян 3', '', '', [['BMW', '520i', 2017, 'WBA5A5C50HG456123', 'G30']]],
+    ['093871245', 'Тигран', 'Григорян', 'shop', 'Ереван, пр. Тиграна Меца 31', 'tigran@autoparts-tm.am', 'Магазин на Тигран Меца', [['Nissan', 'Tiida', 2012, '3N1BC1CP4CK812345', ''], ['Nissan', 'X-Trail', 2016, '5N1AT2MV7GC876543', 'T32']]],
+    ['099102030', 'Ани', 'Арутюнян', 'private', 'Ереван, ул. Абовяна 22', 'ani.harutyunyan@gmail.com', 'Звонить после 18:00', [['Hyundai', 'Elantra', 2019, 'KMHD84LF3KU765432', '']]],
+    ['055667788', 'Давид', 'Мкртчян', 'private', 'Эчмиадзин, ул. Месропа Маштоца 8', '', '', [['Kia', 'Sportage', 2020, 'KNDPM3AC8L7654321', '2.0 бензин']]],
+    ['094415263', 'Карен', 'Хачатрян', 'sto', 'Ереван, ул. Шираки 43', 'karen.sto@mail.am', 'СТО Шираки', [['Opel', 'Astra', 2010, 'W0L0AHL48A2123456', 'H, 1.6'], ['Volkswagen', 'Passat', 2013, '1VWBP7A39DC112233', '1.8 TSI']]],
+    ['043210987', 'Арам', 'Варданян', 'private', 'Ереван, ул. Давида Анахта 11', '', '', [['Lexus', 'RX 350', 2014, '2T2BK1BA5EC234567', '']]],
+    ['096332211', 'Левон', 'Геворгян', 'private', 'Гюмри, ул. Абовяна 120', 'levon.g@yandex.ru', 'Доставка в Гюмри', [['Honda', 'CR-V', 2017, '2HKRW2H58HH654321', '1.5T']]],
+    ['041778899', 'Сурен', 'Манукян', 'shop', 'Ванадзор, пр. Тиграна Меца 50', 'suren@manukyan-auto.am', '', [['Ford', 'Fusion', 2016, '3FA6P0H75GR345678', 'Hybrid']]],
+    ['098120045', 'Ашот', 'Аветисян', 'private', 'Ереван, ул. Багратуняц 17', '', '', [['Mitsubishi', 'Pajero', 2011, 'JMBLYV98WBJ001234', '3.2 DI-D']]],
+    ['091909190', 'Мариам', 'Казарян', 'private', 'Ереван, ул. Туманяна 5', 'mariam.ghazaryan@gmail.com', '', [['Chevrolet', 'Cruze', 2014, '1G1PC5SB7E7234567', '']]],
+    ['077300412', 'Вазген', 'Симонян', 'sto', 'Ереван, ул. Себастии 141', '', 'СТО Subaru / Mazda', [['Subaru', 'Forester', 2018, 'JF2SJAEC4JH512345', 'SJ']]],
+    ['093456789', 'Рубен', 'Погосян', 'private', 'Аштарак, ул. Нерсеса Аштаракеци 9', '', '', [['Mazda', '6', 2015, 'JM1GJ1V58F1198765', 'GJ, 2.5']]],
+    ['095050607', 'Эдгар', 'Степанян', 'private', 'Дилижан, ул. Мясникяна 44', '', '', [['LADA', 'Niva 4x4', 2019, 'XTA212140K2345678', '']]],
+    ['099887766', 'Айк', 'Багдасарян', 'private', 'Ереван, ул. Гая 3/1', 'hayk.b@mail.ru', '', [['Toyota', 'RAV4', 2019, '2T3W1RFV8KW045678', 'Hybrid']]],
+    ['044123321', 'Самвел', 'Мартиросян', 'shop', 'Армавир, ул. Шаумяна 12', '', 'Берёт под заказ', [['Hyundai', 'Sonata', 2017, '5NPE24AF4HH567890', 'LF']]],
+    ['033909812', 'Лилит', 'Абрамян', 'private', 'Ереван, ул. Сарьяна 28', 'lilit.abrahamyan@gmail.com', '', [['Toyota', 'Land Cruiser Prado', 2016, 'JTEBU3FJ0GK098765', '150, 2.7']]]
+  ];
+  C.forEach((c, i) => {
+    const id = ++seq.c, t = new Date(now - (900 - i * 31) * H).toISOString();
+    clients.push({ id, phone: c[0], first_name: c[1], last_name: c[2], client_type: c[3], address: c[4], email: c[5], comment: c[6], created_at: t, updated_at: t });
+    c[7].forEach(k => cars.push({ id: ++seq.k, client_id: id, make: k[0], model: k[1], year: k[2], vin: k[3], comment: k[4], created_at: t, updated_at: t }));
+  });
+  // [client, car index, hours ago (created), status, source, text, work done, parts[name, code, qty, purchase, sale]]
+  const R = [
+    [0, 0, 610, 'closed', 'phone', 'ТО: масло, масляный и воздушный фильтр\n04152-YZZA1 - 4000\n17801-0H050 - 9500', 'Замена масла и фильтров, сброс интервала', [['Фильтр масляный', '04152-YZZA1', 1, 2500, 4000], ['Фильтр воздушный', '17801-0H050', 1, 6200, 9500], ['Масло S-OIL Seven Gold 5W-30 4л', 'SO-7G530-4', 1, 13500, 18000]]],
+    [1, 0, 560, 'closed', 'visit', 'Колодки передние и задние W212\nA0074207520 - 38000\nA0064203120 - 27000', 'Выдано со склада', [['Колодки тормозные передние', 'A0074207520', 1, 27500, 38000], ['Колодки тормозные задние', 'A0064203120', 1, 19000, 27000]]],
+    [2, 0, 520, 'bought', 'whatsapp', 'Свечи зажигания 4 шт, фильтр масляный\n12120037244 - 6500 x4\n11427566327 - 7000', '', [['Свеча зажигания', '12120037244', 4, 4300, 6500], ['Фильтр масляный', '11427566327', 1, 4600, 7000]]],
+    [3, 0, 470, 'closed', 'phone', 'Амортизаторы передние Tiida 2 шт\nKYB 339700 - 31000', 'Отправлено курьером в магазин', [['Амортизатор передний левый', 'KYB-339700', 1, 22500, 31000], ['Амортизатор передний правый', 'KYB-339701', 1, 22500, 31000]]],
+    [4, 0, 430, 'refused', 'instagram', 'Комплект ГРМ Elantra 2.0\nДорого, нашла дешевле', '', [['Цепь ГРМ комплект', '24321-2E010', 1, 46000, 62000]]],
+    [5, 0, 400, 'closed', 'visit', 'Фильтр салона, воздушный фильтр Sportage\n97133-D3200 - 6500\n28113-D3300 - 8000', 'Замена фильтров на месте', [['Фильтр салона', '97133-D3200', 1, 4200, 6500], ['Фильтр воздушный', '28113-D3300', 1, 5100, 8000]]],
+    [6, 0, 365, 'closed', 'phone', 'Сцепление Astra H 1.6 комплект\nLUK 624317909 - 128000', 'Замена сцепления, прокачка привода', [['Комплект сцепления', 'LUK-624317909', 1, 94000, 128000], ['Жидкость тормозная DOT4 1л', '0986494148', 1, 2800, 4500]]],
+    [7, 0, 330, 'bought', 'website', 'Колодки передние RX 350\n04465-48150 - 29000', '', [['Колодки тормозные передние', '04465-48150', 1, 20500, 29000]]],
+    [8, 0, 300, 'closed', 'whatsapp', 'Масляный фильтр 3 шт, масло 0W-20\n15400-RTA-003 - 4500 x3', 'Доставка в Гюмри', [['Фильтр масляный', '15400-RTA-003', 3, 2900, 4500], ['Масло S-OIL Seven Gold 0W-20 4л', 'SO-7G020-4', 1, 15000, 20500]]],
+    [9, 0, 270, 'bought', 'phone', 'Аккумулятор гибридный не нужен, обычный 12V\nBosch S4 60Ah - 46000', '', [['Аккумулятор 12V 60Ah', '0092S40050', 1, 35000, 46000]]],
+    [10, 0, 240, 'closed', 'visit', 'Ремень генератора и ролик Pajero 3.2\nMN149178 - 14500\nGates T38436 - 19000', 'Замена ремня и натяжителя', [['Ремень поликлиновой', 'MN149178', 1, 9800, 14500], ['Ролик натяжной', 'GATES-T38436', 1, 13500, 19000]]],
+    [11, 0, 215, 'refused', 'phone', 'Термостат Cruze 1.8\n55564891 - нет в наличии, ждать 2 недели', '', []],
+    [12, 0, 190, 'closed', 'phone', 'Колодки передние, диски передние 2 шт Forester\n26296SG010 - 26000\n26300SG000 - 34000 x2', 'Замена дисков и колодок', [['Колодки тормозные передние', '26296SG010', 1, 18500, 26000], ['Диск тормозной передний', '26300SG000', 2, 24500, 34000]]],
+    [0, 1, 160, 'bought', 'phone', 'Корзина и диск сцепления Corolla 1.6\n31250-12480 - 41000\n31210-12191 - 46000', '', [['Диск сцепления', '31250-12480', 1, 29500, 41000], ['Корзина сцепления', '31210-12191', 1, 33000, 46000]]],
+    [13, 0, 140, 'in_progress', 'whatsapp', 'Стойки стабилизатора передние 2 шт\nGJ6A-34-170A - 12000 x2\nЖдём поставку в четверг', '', [['Стойка стабилизатора передняя', 'GJ6A-34-170A', 2, 8200, 12000]]],
+    [14, 0, 118, 'closed', 'visit', 'Крестовина, подшипник ступицы Niva\n2121-2202025 - 5500\n2121-3103020 - 7000', 'Замена крестовины кардана', [['Крестовина карданного вала', '2121-2202025', 1, 3400, 5500], ['Подшипник ступицы', '2121-3103020', 1, 4500, 7000]]],
+    [1, 1, 96, 'in_progress', 'phone', 'Помпа и термостат W204 1.8\nA2712001001 - 68000\nA2712000315 - 32000', '', [['Насос водяной', 'A2712001001', 1, 49500, 68000], ['Термостат', 'A2712000315', 1, 22500, 32000]]],
+    [15, 0, 80, 'bought', 'instagram', 'Фильтр масляный, салонный RAV4 Hybrid\n04152-YZZA6 - 4500\n87139-58010 - 8500', '', [['Фильтр масляный', '04152-YZZA6', 1, 2800, 4500], ['Фильтр салона', '87139-58010', 1, 5600, 8500]]],
+    [16, 0, 66, 'in_progress', 'phone', 'Рычаг передний нижний левый Sonata LF\n54500-C1000 - 39000\nПод заказ, предоплата 50%', '', [['Рычаг передний нижний левый', '54500-C1000', 1, 28500, 39000]]],
+    [3, 1, 50, 'open', 'website', 'Вариаторное масло NS-3 5л, фильтр вариатора\nKLE53-00004\n31728-3JX0A', '', [['Масло CVT NS-3 4л', 'KLE53-00004', 1, 21000, 28500], ['Фильтр вариатора', '31728-3JX0A', 1, 7400, 11000]]],
+    [17, 0, 38, 'open', 'instagram', 'Колодки задние Prado 150, посчитать с установкой\n04466-60120', '', [['Колодки тормозные задние', '04466-60120', 1, 16500, 24000]]],
+    [6, 1, 27, 'in_progress', 'visit', 'Катушка зажигания 1 шт, свечи 4 шт Passat 1.8 TSI\n06K905110 - 21000\n06K905601B - 5500 x4', 'Диагностика, пропуски во 2 цилиндре', [['Катушка зажигания', '06K905110', 1, 14800, 21000], ['Свеча зажигания', '06K905601B', 4, 3600, 5500]]],
+    [4, 0, 19, 'open', 'whatsapp', 'Лампа ближнего света H7 2 шт, щётки стеклоочистителя\nOsram 64210NBU', '', [['Лампа H7 Night Breaker', '64210NBU', 2, 4200, 6500], ['Щётки стеклоочистителя комплект', '3397007863', 1, 7800, 11500]]],
+    [2, 0, 7, 'open', 'phone', 'Передние тормозные диски и колодки G30\n34116860912 - уточнить цену\n34106888457', '', []],
+    [5, 0, 2, 'open', 'phone', 'Масло 5W-30 5л и фильтр, записать на ТО в субботу\n26300-35505', '', [['Фильтр масляный', '26300-35505', 1, 2400, 4000], ['Масло S-OIL Seven Gold 5W-30 4л', 'SO-7G530-4', 1, 13500, 18000]]]
+  ];
+  R.forEach(r => {
+    const cl = clients[r[0]], ck = cars.filter(k => k.client_id === cl.id)[r[1]];
+    const id = ++seq.r, created = now - r[2] * H;
+    const upd = new Date(created + (r[3] === 'open' ? 0 : Math.min(r[2] * 0.4, 30) * H)).toISOString();
+    requests.push({ id, client_id: cl.id, car_id: ck ? ck.id : null, request_text: r[5], work_done: r[6], source: r[4], status: r[3], status_changed_at: upd, status_changed_by: 'Мастер', created_at: new Date(created).toISOString(), updated_at: upd });
+    r[7].forEach((p, i) => parts.push({ id: ++seq.p, request_id: id, position: i, name: p[0], code: p[1], qty: p[2], purchase_price: p[3], sale_price: p[4] }));
+  });
+
+  const wait = () => new Promise(res => setTimeout(res, 260));
+  const sums = id => parts.filter(p => p.request_id === id).reduce((a, p) => { a.cost += p.qty * p.purchase_price; a.sale += p.qty * p.sale_price; return a; }, { cost: 0, sale: 0 });
+  const flat = r => {
+    const c = clients.find(x => x.id === r.client_id) || {}, k = cars.find(x => x.id === r.car_id), s = sums(r.id);
+    return Object.assign({}, r, { phone: c.phone, first_name: c.first_name, last_name: c.last_name, client_type: c.client_type, client_name: fullName(c), make: k ? k.make : null, model: k ? k.model : null, year: k ? k.year : null, vin: k ? k.vin : null, car_label: carLabel(k), total_cost: s.cost, total_sale: s.sale, profit: s.sale - s.cost });
+  };
+  const has = (v, q) => String(v || '').toLowerCase().indexOf(String(q).trim().toLowerCase()) !== -1;
+  const dupPhone = (phone, exceptId) => { if (clients.some(c => c.phone === phone && c.id !== exceptId)) throw new Error('Клиент с таким телефоном уже существует'); };
+
+  return {
+    async listRequests(f, page) {
+      await wait();
+      let rows = requests.map(flat);
+      if (f.id) { const n = toInt(f.id) || -1; rows = rows.filter(r => r.id === n); }
+      if (f.name) rows = rows.filter(r => has(r.client_name, f.name));
+      if (f.phone) rows = rows.filter(r => has(r.phone, digits(f.phone) || f.phone));
+      if (f.model) rows = rows.filter(r => has(r.car_label, f.model));
+      if (f.vin) rows = rows.filter(r => has(r.vin, f.vin));
+      if (f.text) rows = rows.filter(r => has(r.request_text, f.text) || parts.some(p => p.request_id === r.id && (has(p.name, f.text) || has(p.code, f.text))));
+      if (f.status) rows = rows.filter(r => r.status === f.status);
+      if (f.source) rows = rows.filter(r => r.source === f.source);
+      if (f.from) { const a = dayStart(f.from); rows = rows.filter(r => r.updated_at >= a); }
+      if (f.to) { const b = dayEnd(f.to); rows = rows.filter(r => r.updated_at < b); }
+      rows.sort((a, b) => a.updated_at < b.updated_at ? 1 : a.updated_at > b.updated_at ? -1 : b.id - a.id);
+      return { rows: rows.slice(page * PAGE, page * PAGE + PAGE), total: rows.length };
+    },
+    async getRequest(id) {
+      await wait();
+      const r = requests.find(x => x.id === id);
+      if (!r) throw new Error('Заявка не найдена');
+      return {
+        request: Object.assign({}, r),
+        client: Object.assign({}, clients.find(c => c.id === r.client_id)),
+        cars: cars.filter(k => k.client_id === r.client_id).map(k => Object.assign({}, k)),
+        parts: parts.filter(p => p.request_id === id).sort((a, b) => a.position - b.position).map(p => Object.assign({}, p)),
+        images: images.filter(i => i.request_id === id).map(i => Object.assign({}, i))
+      };
+    },
+    async findClientByPhone(phone) {
+      await wait();
+      const c = clients.find(x => x.phone === phone);
+      return c ? { client: Object.assign({}, c), cars: cars.filter(k => k.client_id === c.id).map(k => Object.assign({}, k)) } : null;
+    },
+    async saveRequest(p) {
+      await wait();
+      const t = new Date().toISOString();
+      let c;
+      if (p.client.id) {
+        c = clients.find(x => x.id === p.client.id);
+        if (!c) throw new Error('Клиент не найден');
+        dupPhone(p.client.phone, c.id);
+        Object.assign(c, p.client, { updated_at: t });
+      } else {
+        dupPhone(p.client.phone, null);
+        c = Object.assign({}, p.client, { id: ++seq.c, created_at: t, updated_at: t });
+        clients.push(c);
+      }
+      p.removedCarIds.forEach(cid => {
+        const i = cars.findIndex(k => k.id === cid); if (i !== -1) cars.splice(i, 1);
+        requests.forEach(r => { if (r.car_id === cid) r.car_id = null; });
+      });
+      let carId = null;
+      p.cars.forEach(k => {
+        const f = { make: k.make, model: k.model, year: k.year, vin: k.vin, comment: k.comment };
+        let row = k.id && cars.find(x => x.id === k.id);
+        if (row) Object.assign(row, f, { updated_at: t });
+        else { row = Object.assign({ id: ++seq.k, client_id: c.id, created_at: t, updated_at: t }, f); cars.push(row); }
+        if (k.selected) carId = row.id;
+      });
+      let r = p.id && requests.find(x => x.id === p.id);
+      if (r) {
+        if (r.status !== p.request.status) { r.status_changed_at = t; r.status_changed_by = 'demo'; }
+        Object.assign(r, p.request, { client_id: c.id, car_id: carId, updated_at: t });
+      } else {
+        r = Object.assign({ id: ++seq.r, client_id: c.id, car_id: carId, status_changed_at: t, status_changed_by: 'Мастер', created_at: t, updated_at: t }, p.request);
+        requests.push(r);
+      }
+      for (let i = parts.length - 1; i >= 0; i--) if (parts[i].request_id === r.id) parts.splice(i, 1);
+      p.parts.forEach((x, i) => parts.push({ id: ++seq.p, request_id: r.id, position: i, name: x.name, code: x.code, qty: x.qty, purchase_price: x.purchase_price, sale_price: x.sale_price }));
+      p.removedImages.forEach(im => { const i = images.findIndex(x => x.id === im.id); if (i !== -1) { URL.revokeObjectURL(images[i].url); images.splice(i, 1); } });
+      p.newImages.forEach(file => images.push({ id: ++seq.i, request_id: r.id, path: file.name, url: URL.createObjectURL(file) }));
+      return r.id;
+    },
+    async deleteRequest(id) {
+      await wait();
+      const i = requests.findIndex(x => x.id === id); if (i !== -1) requests.splice(i, 1);
+      for (let j = parts.length - 1; j >= 0; j--) if (parts[j].request_id === id) parts.splice(j, 1);
+      for (let j = images.length - 1; j >= 0; j--) if (images[j].request_id === id) images.splice(j, 1);
+    },
+    async listClients(q, page) {
+      await wait();
+      let rows = clients.map(c => {
+        const rs = requests.filter(r => r.client_id === c.id);
+        return Object.assign({}, c, { client_name: fullName(c), cars_count: cars.filter(k => k.client_id === c.id).length, requests_count: rs.length, last_request_at: rs.reduce((m, r) => r.created_at > m ? r.created_at : m, '') || null });
+      });
+      if (q) rows = rows.filter(c => has(c.client_name, q) || (digits(q) && has(c.phone, digits(q))));
+      rows.sort((a, b) => (b.last_request_at || '').localeCompare(a.last_request_at || ''));
+      return { rows: rows.slice(page * PAGE, page * PAGE + PAGE), total: rows.length };
+    },
+    async getClient(id) {
+      await wait();
+      const c = clients.find(x => x.id === id);
+      if (!c) throw new Error('Клиент не найден');
+      return {
+        client: Object.assign({}, c),
+        cars: cars.filter(k => k.client_id === id).map(k => Object.assign({}, k)),
+        requests: requests.filter(r => r.client_id === id).map(flat).sort((a, b) => a.created_at < b.created_at ? 1 : -1)
+      };
+    },
+    async stats(from, to) {
+      await wait();
+      const a = from ? dayStart(from) : '', b = to ? dayEnd(to) : '￿';
+      const rs = requests.filter(r => r.created_at >= a && r.created_at < b);
+      const out = { total: rs.length, by_status: {}, by_source: {}, revenue: 0, cost: 0, sold: 0 };
+      rs.forEach(r => {
+        out.by_status[r.status] = (out.by_status[r.status] || 0) + 1;
+        out.by_source[r.source] = (out.by_source[r.source] || 0) + 1;
+        if (SOLD.indexOf(r.status) !== -1) { const s = sums(r.id); if (s.sale || s.cost) out.sold++; out.revenue += s.sale; out.cost += s.cost; }
+      });
+      return out;
+    }
+  };
+}
+
+/* ---------- supabase implementation ---------- */
+function createSupabaseStore(sb) {
+  const chk = error => {
+    if (error) throw new Error(errMsg(error));
+  };
+  const like = v => '%' + String(v).replace(/[%_\\,()]/g, ' ').trim() + '%';
+  const nul = v => (v === '' || v == null) ? null : v;
+  const withUrls = async imgs => {
+    if (!imgs.length) return imgs;
+    const { data, error } = await sb.storage.from(BUCKET).createSignedUrls(imgs.map(i => i.path), 3600);
+    if (error || !data) return imgs;
+    return imgs.map((im, i) => Object.assign({}, im, { url: data[i] && data[i].signedUrl ? data[i].signedUrl : '' }));
+  };
+  return {
+    async listRequests(f, page) {
+      let q = sb.from('as_requests_view').select('*', { count: 'exact' });
+      if (f.id) q = q.eq('id', toInt(f.id) || -1);
+      if (f.name) q = q.ilike('client_name', like(f.name));
+      if (f.phone) q = q.ilike('phone', like(digits(f.phone) || f.phone));
+      if (f.model) q = q.ilike('car_label', like(f.model));
+      if (f.vin) q = q.ilike('vin', like(f.vin));
+      if (f.text) { const t = like(f.text); q = q.or('request_text.ilike.' + t + ',parts_text.ilike.' + t); }
+      if (f.status) q = q.eq('status', f.status);
+      if (f.source) q = q.eq('source', f.source);
+      if (f.from) q = q.gte('updated_at', dayStart(f.from));
+      if (f.to) q = q.lt('updated_at', dayEnd(f.to));
+      const { data, error, count } = await q.order('updated_at', { ascending: false }).order('id', { ascending: false }).range(page * PAGE, page * PAGE + PAGE - 1);
+      if (error && error.code === 'PGRST103') return { rows: [], total: 0, outOfRange: true };
+      chk(error);
+      return { rows: data || [], total: count || 0 };
+    },
+    async getRequest(id) {
+      const a = await sb.from('as_requests').select('*').eq('id', id).single();
+      chk(a.error);
+      const r = a.data;
+      const [c, k, p, im] = await Promise.all([
+        sb.from('as_clients').select('*').eq('id', r.client_id).single(),
+        sb.from('as_cars').select('*').eq('client_id', r.client_id).order('id'),
+        sb.from('as_request_parts').select('*').eq('request_id', id).order('position'),
+        sb.from('as_request_images').select('*').eq('request_id', id).order('id')
+      ]);
+      chk(c.error); chk(k.error); chk(p.error); chk(im.error);
+      return { request: r, client: c.data, cars: k.data || [], parts: p.data || [], images: await withUrls(im.data || []) };
+    },
+    async findClientByPhone(phone) {
+      const c = await sb.from('as_clients').select('*').eq('phone', phone).maybeSingle();
+      chk(c.error);
+      if (!c.data) return null;
+      const k = await sb.from('as_cars').select('*').eq('client_id', c.data.id).order('id');
+      chk(k.error);
+      return { client: c.data, cars: k.data || [] };
+    },
+    async saveRequest(p) {
+      const cf = { phone: p.client.phone, first_name: p.client.first_name, last_name: p.client.last_name, address: nul(p.client.address), email: nul(p.client.email), client_type: p.client.client_type, comment: nul(p.client.comment) };
+      let cid = p.client.id;
+      if (cid) { const u = await sb.from('as_clients').update(cf).eq('id', cid); chk(u.error); }
+      else { const i = await sb.from('as_clients').insert(cf).select('id').single(); chk(i.error); cid = i.data.id; }
+      if (p.removedCarIds.length) { const d = await sb.from('as_cars').delete().in('id', p.removedCarIds); chk(d.error); }
+      let carId = null;
+      for (const k of p.cars) {
+        const kf = { client_id: cid, make: k.make, model: k.model, year: nul(k.year), vin: nul(k.vin), comment: nul(k.comment) };
+        let id = k.id;
+        if (id) { const u = await sb.from('as_cars').update(kf).eq('id', id); chk(u.error); }
+        else { const i = await sb.from('as_cars').insert(kf).select('id').single(); chk(i.error); id = i.data.id; }
+        if (k.selected) carId = id;
+      }
+      const rf = Object.assign({ client_id: cid, car_id: carId }, p.request);
+      let rid = p.id;
+      if (rid) { const u = await sb.from('as_requests').update(rf).eq('id', rid); chk(u.error); }
+      else { const i = await sb.from('as_requests').insert(rf).select('id').single(); chk(i.error); rid = i.data.id; }
+      const d = await sb.from('as_request_parts').delete().eq('request_id', rid); chk(d.error);
+      if (p.parts.length) {
+        const i = await sb.from('as_request_parts').insert(p.parts.map((x, n) => ({ request_id: rid, position: n, name: x.name, code: nul(x.code), qty: x.qty, purchase_price: x.purchase_price, sale_price: x.sale_price })));
+        chk(i.error);
+      }
+      if (p.removedImages.length) {
+        await sb.storage.from(BUCKET).remove(p.removedImages.map(x => x.path));
+        const di = await sb.from('as_request_images').delete().in('id', p.removedImages.map(x => x.id)); chk(di.error);
+      }
+      for (const file of p.newImages) {
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'jpg';
+        const path = rid + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 10) + '.' + ext;
+        const up = await sb.storage.from(BUCKET).upload(path, file, { contentType: file.type || 'image/jpeg' });
+        if (up.error) throw new Error('Заявка сохранена, но фото не загружено. ' + errMsg(up.error));
+        const ins = await sb.from('as_request_images').insert({ request_id: rid, path }); chk(ins.error);
+      }
+      return rid;
+    },
+    async deleteRequest(id) {
+      const im = await sb.from('as_request_images').select('path').eq('request_id', id);
+      if (im.data && im.data.length) await sb.storage.from(BUCKET).remove(im.data.map(x => x.path));
+      const d = await sb.from('as_requests').delete().eq('id', id); chk(d.error);
+    },
+    async listClients(q, page) {
+      let s = sb.from('as_clients_view').select('*', { count: 'exact' });
+      if (q) {
+        const t = like(q), ph = digits(q);
+        s = s.or('client_name.ilike.' + t + (ph ? ',phone.ilike.%' + ph + '%' : ''));
+      }
+      const { data, error, count } = await s.order('last_request_at', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).range(page * PAGE, page * PAGE + PAGE - 1);
+      if (error && error.code === 'PGRST103') return { rows: [], total: 0, outOfRange: true };
+      chk(error);
+      return { rows: data || [], total: count || 0 };
+    },
+    async getClient(id) {
+      const [c, k, r] = await Promise.all([
+        sb.from('as_clients').select('*').eq('id', id).single(),
+        sb.from('as_cars').select('*').eq('client_id', id).order('id'),
+        sb.from('as_requests_view').select('*').eq('client_id', id).order('created_at', { ascending: false }).limit(200)
+      ]);
+      chk(c.error); chk(k.error); chk(r.error);
+      return { client: c.data, cars: k.data || [], requests: r.data || [] };
+    },
+    async stats(from, to) {
+      const { data, error } = await sb.rpc('as_request_stats', { p_from: from ? dayStart(from) : null, p_to: to ? dayEnd(to) : null });
+      chk(error);
+      const d = data || {};
+      return { total: d.total || 0, by_status: d.by_status || {}, by_source: d.by_source || {}, revenue: Number(d.revenue) || 0, cost: Number(d.cost) || 0, sold: d.sold || 0 };
+    }
+  };
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+let store = null, sb = null;
+const S = {
+  view: 'requests',
+  rq: { f: { id: '', name: '', phone: '', model: '', vin: '', text: '', status: '', source: '', from: '', to: '' }, page: 0, tok: 0, total: 0 },
+  cl: { q: '', page: 0, tok: 0 },
+  st: { from: '', to: '', tok: 0 },
+  selReq: null, selClient: null
+};
+let F = null;            // request form state while the panel edits a request
+let panelMode = null;    // 'request' | 'client' | null
+let lastFocus = null;
+let pendingClose = null;
+
+const el = {
+  app: $('#app'), login: $('#login'), panel: $('#panel'), title: $('#view-title'),
+  rqRows: $('#rq-rows'), rqInfo: $('#rq-info'), rqPager: $('#rq-pager'), rqGrid: $('#rq-grid'),
+  clRows: $('#cl-rows'), clInfo: $('#cl-info'), clPager: $('#cl-pager'), stBody: $('#st-body')
+};
+
+$$('[data-i]').forEach(n => { n.innerHTML = icon(n.dataset.i); });
+$('#rq-f-status').innerHTML = opts(STATUSES, '', 'Все');
+$('#rq-f-source').innerHTML = opts(SOURCES, '', 'Все');
+
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2400); }
+
+function stateHTML(kind, o) {
+  return '<div class="state' + (kind === 'error' ? ' bad' : '') + '"' + (kind === 'error' ? ' role="alert"' : '') + '>' + icon(kind === 'error' ? 'alert' : 'inbox') +
+    '<h3>' + esc(o.title) + '</h3><p>' + esc(o.text) + '</p>' +
+    (o.action ? '<div class="acts"><button type="button" class="btn" data-act="' + o.action + '">' + esc(o.actionLabel) + '</button></div>' : '') + '</div>';
+}
+function skeleton(cls, n, widths) {
+  let h = '';
+  for (let i = 0; i < n; i++) h += '<div class="g-row row" aria-hidden="true">' + widths.map((w, j) => '<span class="' + (cls[j] || '') + '"><span class="sk" style="display:block;width:' + (w - (i * 7 + j * 5) % 30) + '%"></span></span>').join('') + '</div>';
+  return h;
+}
+function pagerHTML(page, total) {
+  const pages = Math.max(1, Math.ceil(total / PAGE));
+  return '<span class="mono">Стр. ' + (page + 1) + ' / ' + fmtInt(pages) + '</span><span class="sp"></span>' +
+    '<button type="button" class="btn icon" data-page="' + (page - 1) + '" aria-label="Предыдущая страница"' + (page <= 0 ? ' disabled' : '') + '>' + icon('prev') + '</button>' +
+    '<button type="button" class="btn icon" data-page="' + (page + 1) + '" aria-label="Следующая страница"' + (page >= pages - 1 ? ' disabled' : '') + '>' + icon('next') + '</button>';
+}
+const rangeText = (page, n, total) => total ? 'Показано ' + fmtInt(page * PAGE + 1) + '–' + fmtInt(page * PAGE + n) + ' из ' + fmtInt(total) : '';
+
+/* ---------- requests list ---------- */
+const RQ_CLS = ['c-id', 'c-upd', 'c-name', 'c-phone', 'c-model', 'c-vin', 'c-text', 'c-money', 'c-status', 'c-src'];
+function rqRow(r) {
+  return '<button type="button" class="g-row row' + (S.selReq === r.id ? ' sel' : '') + '" data-id="' + r.id + '" aria-label="Заявка ' + r.id + ', ' + (esc(r.client_name) || 'без имени') + '">' +
+    '<span class="c-id mono">' + r.id + '</span>' +
+    '<span class="c-upd mono">' + fmtDT(r.updated_at).replace(' ', '<small>') + '</small></span>' +
+    '<span class="c-name">' + (esc(r.client_name) || '<span class="dim">Без имени</span>') + '</span>' +
+    '<span class="c-phone mono">' + esc(fmtPhone(r.phone)) + '</span>' +
+    '<span class="c-model">' + (r.make ? esc(r.make + ' ' + (r.model || '')) + (r.year ? ' <i class="mono">' + esc(r.year) + '</i>' : '') : '<span class="dim">—</span>') + '</span>' +
+    '<span class="c-vin mono">' + esc(r.vin || '') + '</span>' +
+    '<span class="c-text">' + esc(r.request_text || '') + '</span>' +
+    '<span class="c-money mono">' + (Number(r.total_sale) || Number(r.total_cost) ? '<b>' + fmtInt(r.total_sale) + '</b><small title="Прибыль">' + fmtInt(r.profit) + '</small>' : '') + '</span>' +
+    '<span class="c-status"><span class="st st-' + esc(r.status) + '">' + esc(STATUSES[r.status] || r.status) + '</span><small>' + esc(who(r.status_changed_by)) + (r.status_changed_by ? ' · ' : '') + fmtDT(r.status_changed_at) + '</small></span>' +
+    '<span class="c-src" title="' + esc(SOURCES[r.source] || '') + '">' + icon(SOURCE_ICON[r.source] || 'phone') + '<b style="font-weight:400">' + esc(SOURCES[r.source] || '') + '</b></span>' +
+    '</button>';
+}
+const rqActive = () => Object.keys(S.rq.f).filter(k => S.rq.f[k]).length;
+async function loadRequests() {
+  const st = S.rq, tok = ++st.tok;
+  el.rqRows.innerHTML = skeleton(RQ_CLS, 9, [60, 80, 70, 85, 75, 90, 80, 70, 60, 50]);
+  el.rqRows.setAttribute('aria-busy', 'true');
+  el.rqPager.hidden = true; el.rqInfo.textContent = '';
+  const n = rqActive();
+  $('#rq-reset').hidden = !n;
+  $('#rq-fcount').textContent = n ? 'Фильтры · ' + n : 'Фильтры';
+  try {
+    let res = await store.listRequests(st.f, st.page);
+    if (tok !== st.tok) return;
+    if (res.outOfRange && st.page > 0) { st.page = 0; return loadRequests(); }
+    st.total = res.total;
+    if (!res.rows.length) {
+      el.rqRows.innerHTML = n
+        ? stateHTML('empty', { title: 'Ничего не найдено', text: 'Под выбранные фильтры не подходит ни одна заявка. Измените условия или сбросьте фильтры.', action: 'reset', actionLabel: 'Сбросить фильтры' })
+        : stateHTML('empty', { title: 'Заявок пока нет', text: 'Создайте первую заявку: телефон клиента, автомобиль и что нужно найти.', action: 'new', actionLabel: 'Новая заявка' });
+    } else {
+      el.rqRows.innerHTML = res.rows.map(rqRow).join('');
+      el.rqInfo.textContent = rangeText(st.page, res.rows.length, res.total);
+      el.rqPager.innerHTML = pagerHTML(st.page, res.total);
+      el.rqPager.hidden = res.total <= PAGE;
+    }
+  } catch (e) {
+    if (tok !== st.tok) return;
+    el.rqRows.innerHTML = stateHTML('error', { title: 'Не удалось загрузить заявки', text: errMsg(e) + '.', action: 'retry', actionLabel: 'Повторить' });
+  } finally {
+    if (tok === st.tok) el.rqRows.removeAttribute('aria-busy');
+  }
+}
+function readRqFilters() {
+  const f = S.rq.f, a = $('#rq-filters'), b = $('#rq-bar');
+  ['id', 'name', 'phone', 'model', 'vin', 'text', 'status', 'source'].forEach(k => { f[k] = a.elements[k].value.trim(); });
+  f.from = b.elements.from.value; f.to = b.elements.to.value;
+  S.rq.page = 0; loadRequests();
+}
+const rqDebounced = debounce(readRqFilters, 320);
+$('#rq-filters').addEventListener('input', e => { if (e.target.tagName === 'SELECT') readRqFilters(); else rqDebounced(); });
+$('#rq-filters').addEventListener('submit', e => { e.preventDefault(); readRqFilters(); });
+$('#rq-bar').addEventListener('change', readRqFilters);
+$('#rq-bar').addEventListener('submit', e => { e.preventDefault(); readRqFilters(); });
+function resetRqFilters() { $('#rq-filters').reset(); $('#rq-bar').reset(); readRqFilters(); }
+$('#rq-reset').addEventListener('click', resetRqFilters);
+$('#rq-ftoggle').addEventListener('click', e => { const on = el.rqGrid.classList.toggle('filters-open'); e.currentTarget.setAttribute('aria-expanded', on); });
+el.rqRows.addEventListener('click', e => {
+  const act = e.target.closest('[data-act]');
+  if (act) { if (act.dataset.act === 'reset') resetRqFilters(); else if (act.dataset.act === 'new') openRequest(null); else loadRequests(); return; }
+  const row = e.target.closest('.row[data-id]');
+  if (row) openRequest(Number(row.dataset.id));
+});
+el.rqPager.addEventListener('click', e => { const b = e.target.closest('[data-page]'); if (b && !b.disabled) { S.rq.page = Number(b.dataset.page); loadRequests(); window.scrollTo(0, 0); } });
+
+/* ---------- clients list ---------- */
+const CL_CLS = ['c-name', 'c-phone', 'c-type', 'c-cars', 'c-req', 'c-last'];
+async function loadClients() {
+  const st = S.cl, tok = ++st.tok;
+  el.clRows.innerHTML = skeleton(CL_CLS, 8, [55, 80, 60, 40, 40, 70]);
+  el.clPager.hidden = true; el.clInfo.textContent = '';
+  try {
+    const res = await store.listClients(st.q, st.page);
+    if (tok !== st.tok) return;
+    if (res.outOfRange && st.page > 0) { st.page = 0; return loadClients(); }
+    if (!res.rows.length) {
+      el.clRows.innerHTML = st.q
+        ? stateHTML('empty', { title: 'Клиент не найден', text: 'По запросу «' + st.q + '» никого нет. Проверьте номер или имя.', action: 'reset', actionLabel: 'Очистить поиск' })
+        : stateHTML('empty', { title: 'Клиентов пока нет', text: 'Клиент появляется здесь автоматически вместе с первой заявкой.', action: 'new', actionLabel: 'Новая заявка' });
+      return;
+    }
+    el.clRows.innerHTML = res.rows.map(c =>
+      '<button type="button" class="g-row row' + (S.selClient === c.id ? ' sel' : '') + '" data-id="' + c.id + '">' +
+      '<span class="c-name">' + (esc(c.client_name) || '<span class="dim">Без имени</span>') + '</span>' +
+      '<span class="c-phone mono">' + esc(fmtPhone(c.phone)) + '</span>' +
+      '<span class="c-type dim">' + esc(CLIENT_TYPES[c.client_type] || '') + '</span>' +
+      '<span class="c-cars mono">' + (c.cars_count || 0) + '</span>' +
+      '<span class="c-req mono">' + (c.requests_count || 0) + '</span>' +
+      '<span class="c-last mono dim">' + (fmtD(c.last_request_at) || '—') + '</span></button>').join('');
+    el.clInfo.textContent = rangeText(st.page, res.rows.length, res.total);
+    el.clPager.innerHTML = pagerHTML(st.page, res.total);
+    el.clPager.hidden = res.total <= PAGE;
+  } catch (e) {
+    if (tok !== st.tok) return;
+    el.clRows.innerHTML = stateHTML('error', { title: 'Не удалось загрузить клиентов', text: errMsg(e) + '.', action: 'retry', actionLabel: 'Повторить' });
+  }
+}
+const clDebounced = debounce(() => { S.cl.q = $('#cl-q').value.trim(); S.cl.page = 0; loadClients(); }, 320);
+$('#cl-bar').addEventListener('input', clDebounced);
+$('#cl-bar').addEventListener('submit', e => { e.preventDefault(); clDebounced(); });
+el.clRows.addEventListener('click', e => {
+  const act = e.target.closest('[data-act]');
+  if (act) { if (act.dataset.act === 'reset') { $('#cl-q').value = ''; S.cl.q = ''; loadClients(); } else if (act.dataset.act === 'new') openRequest(null); else loadClients(); return; }
+  const row = e.target.closest('.row[data-id]');
+  if (row) openClient(Number(row.dataset.id));
+});
+el.clPager.addEventListener('click', e => { const b = e.target.closest('[data-page]'); if (b && !b.disabled) { S.cl.page = Number(b.dataset.page); loadClients(); window.scrollTo(0, 0); } });
+
+/* ---------- stats ---------- */
+async function loadStats() {
+  const st = S.st, tok = ++st.tok;
+  el.stBody.innerHTML = '<div class="stats" aria-hidden="true"><div><div class="sk" style="width:120px"></div><div class="sk" style="width:60%;height:44px;margin:14px 0 30px"></div>' +
+    [70, 62, 66, 50].map(w => '<div class="sk" style="width:' + w + '%;margin:22px 0"></div>').join('') + '</div><div class="dist">' + [90, 80, 85, 70, 75].map(w => '<div class="sk" style="width:' + w + '%;margin:20px 0"></div>').join('') + '</div></div>';
+  try {
+    const d = await store.stats(st.from, st.to);
+    if (tok !== st.tok) return;
+    if (!d.total) {
+      el.stBody.innerHTML = stateHTML('empty', { title: 'За этот период заявок нет', text: 'Выберите другой период, чтобы увидеть выручку, себестоимость и прибыль.', action: 'all', actionLabel: 'Показать всё время' });
+      return;
+    }
+    const profit = d.revenue - d.cost, margin = d.revenue ? Math.round(profit / d.revenue * 100) : 0;
+    const maxS = Math.max.apply(null, Object.keys(STATUSES).map(k => d.by_status[k] || 0).concat(1));
+    const maxO = Math.max.apply(null, Object.keys(SOURCES).map(k => d.by_source[k] || 0).concat(1));
+    const bar = (n, max, color) => '<div class="track"><div class="fill" style="transform:scaleX(' + (n / max).toFixed(3) + ')' + (color ? ';--c:var(' + color + ')' : '') + '"></div></div>';
+    const stColor = { open: '--st-open', in_progress: '--st-prog', bought: '--st-bought', closed: '--st-closed', refused: '--st-refused' };
+    el.stBody.innerHTML = '<div class="stats"><div class="hero">' +
+      '<p class="lab">Прибыль за период</p>' +
+      '<p class="big' + (profit < 0 ? ' neg' : '') + '">' + fmtInt(profit) + '<small>AMD</small></p><div class="rule"></div>' +
+      '<dl class="ledger">' +
+      '<dt>Выручка (продажа)</dt><dd>' + money(d.revenue) + '</dd>' +
+      '<dt>Себестоимость (закупка)</dt><dd>' + money(d.cost) + '</dd>' +
+      '<dt>Маржа</dt><dd>' + margin + '<small>%</small></dd>' +
+      '<dt>Заявок с продажей</dt><dd>' + fmtInt(d.sold) + '</dd>' +
+      '<dt>Всего заявок</dt><dd>' + fmtInt(d.total) + '</dd></dl>' +
+      '<p class="foot">Деньги считаются по запчастям заявок в статусах «Куплено» и «Закрыта», период — по дате создания заявки.</p></div>' +
+      '<div class="dist"><section><h3>Заявки по статусам</h3>' +
+      Object.keys(STATUSES).map(k => '<div class="d-row"><span class="st st-' + k + '">' + STATUSES[k] + '</span>' + bar(d.by_status[k] || 0, maxS, stColor[k]) + '<span class="n">' + (d.by_status[k] || 0) + '</span></div>').join('') +
+      '</section><section><h3>Источники</h3>' +
+      Object.keys(SOURCES).map(k => '<div class="d-row"><span class="nm">' + icon(SOURCE_ICON[k]) + SOURCES[k] + '</span>' + bar(d.by_source[k] || 0, maxO) + '<span class="n">' + (d.by_source[k] || 0) + '</span></div>').join('') +
+      '</section></div></div>';
+  } catch (e) {
+    if (tok !== st.tok) return;
+    el.stBody.innerHTML = stateHTML('error', { title: 'Не удалось посчитать статистику', text: errMsg(e) + '.', action: 'retry', actionLabel: 'Повторить' });
+  }
+}
+function setPreset(p) {
+  const b = $('#st-bar'), t = new Date();
+  if (p === 'all') { b.elements.from.value = ''; b.elements.to.value = ''; }
+  else { const f = new Date(); f.setDate(f.getDate() - Number(p)); b.elements.from.value = ymd(f); b.elements.to.value = ymd(t); }
+  S.st.from = b.elements.from.value; S.st.to = b.elements.to.value; loadStats();
+}
+$('#st-bar').addEventListener('click', e => { const b = e.target.closest('[data-preset]'); if (b) setPreset(b.dataset.preset); });
+$('#st-bar').addEventListener('change', () => { const b = $('#st-bar'); S.st.from = b.elements.from.value; S.st.to = b.elements.to.value; loadStats(); });
+$('#st-bar').addEventListener('submit', e => e.preventDefault());
+el.stBody.addEventListener('click', e => { const a = e.target.closest('[data-act]'); if (a) { if (a.dataset.act === 'all') setPreset('all'); else loadStats(); } });
+
+/* ---------- navigation ---------- */
+const TITLES = { requests: 'Заявки', clients: 'Клиенты', stats: 'Статистика' };
+function showView(v) {
+  S.view = v;
+  ['requests', 'clients', 'stats'].forEach(n => { $('#v-' + n).hidden = n !== v; });
+  $$('.nav-i[data-view]').forEach(b => { if (b.dataset.view === v) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  el.title.textContent = TITLES[v];
+  document.title = TITLES[v] + ' · Журнал заявок';
+  reloadView();
+}
+function reloadView() { if (S.view === 'requests') loadRequests(); else if (S.view === 'clients') loadClients(); else loadStats(); }
+$$('.nav-i[data-view]').forEach(b => b.addEventListener('click', () => { if (b.dataset.view !== S.view) requestClose(() => showView(b.dataset.view)); }));
+$('#btn-new').addEventListener('click', () => openRequest(null));
+
+/* ---------- panel plumbing ---------- */
+function markSelected() {
+  $$('.row.sel').forEach(r => r.classList.remove('sel'));
+  if (S.selReq) { const r = $('.row[data-id="' + S.selReq + '"]', el.rqRows); if (r) r.classList.add('sel'); }
+  if (S.selClient) { const r = $('.row[data-id="' + S.selClient + '"]', el.clRows); if (r) r.classList.add('sel'); }
+}
+function openPanel(mode) {
+  if (!el.panel.classList.contains('open')) lastFocus = document.activeElement;
+  panelMode = mode; pendingClose = null;
+  el.panel.inert = false;
+  el.panel.classList.add('open');
+  el.panel.classList.toggle('full', mode === 'request');
+  el.app.classList.toggle('has-panel', mode !== 'request');
+  markSelected();
+}
+function doClose() {
+  if (F) F.newImages.forEach(n => URL.revokeObjectURL(n.url));
+  F = null; panelMode = null; pendingClose = null; S.selReq = null; S.selClient = null;
+  el.panel.classList.remove('open', 'full');
+  el.panel.inert = true;
+  el.app.classList.remove('has-panel');
+  markSelected();
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus(); else $('#btn-new').focus();
+  lastFocus = null;
+}
+/* Close (or switch away from) the panel; asks first when the form has unsaved edits. */
+function requestClose(after) {
+  if (!panelMode) { if (after) after(); return; }
+  if (panelMode === 'request' && F && F.dirty) {
+    pendingClose = after || null;
+    const c = $('#p-confirm');
+    if (c) { c.hidden = false; $('button', c).focus(); }
+    return;
+  }
+  doClose(); if (after) after();
+}
+function panelHead(title, sub) {
+  return '<div class="p-head"><h2 id="panel-title">' + esc(title) + (sub ? '<span class="mono">' + esc(sub) + '</span>' : '') + '</h2>' +
+    '<button type="button" class="btn icon ghost" data-close aria-label="Закрыть панель">' + icon('x') + '</button></div>';
+}
+function panelLoading(title) {
+  el.panel.innerHTML = panelHead(title) + '<div class="p-body" aria-busy="true">' +
+    [0, 1, 2].map(() => '<div class="blk"><div class="sk" style="width:110px;margin-bottom:18px"></div><div class="sk" style="width:92%;height:30px;margin-bottom:10px"></div><div class="sk" style="width:70%;height:30px"></div></div>').join('') + '</div>';
+}
+function panelError(title, e, retry) {
+  el.panel.innerHTML = panelHead(title) + '<div class="p-body">' + stateHTML('error', { title: 'Не удалось загрузить', text: errMsg(e) + '.', action: 'retry', actionLabel: 'Повторить' }) + '</div>';
+  $('[data-act="retry"]', el.panel).addEventListener('click', retry);
+}
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || !panelMode) return;
+  const c = $('#p-confirm');
+  if (c && !c.hidden) { c.hidden = true; pendingClose = null; return; }
+  e.preventDefault(); requestClose();
+});
+
+/* ---------- client panel ---------- */
+async function openClient(id) {
+  if (panelMode === 'request' && F && F.dirty) { requestClose(() => openClient(id)); return; }
+  F = null; S.selReq = null; S.selClient = id;
+  openPanel('client');
+  panelLoading('Клиент');
+  el.panel.focus();
+  let d;
+  try { d = await store.getClient(id); } catch (e) { if (S.selClient === id) panelError('Клиент', e, () => openClient(id)); return; }
+  if (S.selClient !== id || panelMode !== 'client') return;
+  const c = d.client;
+  const sale = d.requests.filter(r => SOLD.indexOf(r.status) !== -1).reduce((a, r) => a + Number(r.total_sale || 0), 0);
+  el.panel.innerHTML = panelHead(fullName(c) || 'Без имени', fmtPhone(c.phone)) +
+    '<div class="p-body">' +
+    '<section class="blk"><h3><b>01</b>Данные</h3><dl class="kv">' +
+    '<dt>Телефон</dt><dd class="mono">' + esc(fmtPhone(c.phone)) + '</dd>' +
+    '<dt>Тип</dt><dd>' + esc(CLIENT_TYPES[c.client_type] || '') + '</dd>' +
+    (c.address ? '<dt>Адрес</dt><dd>' + esc(c.address) + '</dd>' : '') +
+    (c.email ? '<dt>Эл. почта</dt><dd>' + esc(c.email) + '</dd>' : '') +
+    (c.comment ? '<dt>Комментарий</dt><dd>' + esc(c.comment) + '</dd>' : '') +
+    '<dt>Куплено на</dt><dd class="mono">' + fmtInt(sale) + ' AMD</dd>' +
+    '</dl></section>' +
+    '<section class="blk"><h3><b>02</b>Автомобили<span class="note mono">' + d.cars.length + '</span></h3>' +
+    (d.cars.length ? d.cars.map(k => '<div class="carline"><span>' + esc(carLabel(k)) + '</span><span class="mono">' + esc(k.vin || '') + '</span>' + (k.comment ? '<span class="dim">' + esc(k.comment) + '</span>' : '') + '</div>').join('') : '<p class="dim">Автомобили не указаны.</p>') +
+    '</section>' +
+    '<section class="blk"><h3><b>03</b>История заявок<span class="note mono">' + d.requests.length + '</span></h3>' +
+    (d.requests.length ? d.requests.map(r =>
+      '<button type="button" class="hist" data-req="' + r.id + '"><span class="mono">' + r.id + '</span><span class="mono">' + fmtD(r.created_at) + '</span>' +
+      '<span class="st st-' + esc(r.status) + '">' + esc(STATUSES[r.status] || '') + '</span><span class="mono">' + (Number(r.total_sale) ? fmtInt(r.total_sale) : '') + '</span>' +
+      '<span class="t">' + esc((r.car_label ? r.car_label + ' · ' : '') + (r.request_text || '').split('\n')[0]) + '</span></button>').join('')
+      : '<p class="dim">У клиента ещё нет заявок.</p>') +
+    '</section></div>' +
+    '<div class="p-foot"><button type="button" class="btn primary" data-newfor="' + esc(c.phone) + '">' + icon('plus') + 'Новая заявка для клиента</button></div>';
+}
+
+/* ---------- request form ---------- */
+const blankCar = () => ({ key: key(), id: null, make: '', model: '', year: '', vin: '', comment: '' });
+const blankPart = () => ({ key: key(), name: '', code: '', qty: '1', purchase_price: '', sale_price: '' });
+
+function fld(name, label, value, o) {
+  o = o || {};
+  const id = 'f-' + name, common = ' id="' + id + '" name="' + name + '" data-k="' + name + '"' + (o.attrs || '');
+  let ctl;
+  if (o.type === 'select') ctl = '<select' + common + '>' + opts(o.map, value) + '</select>';
+  else if (o.type === 'textarea') ctl = '<textarea' + common + ' rows="' + (o.rows || 3) + '">' + esc(value) + '</textarea>';
+  else ctl = '<input' + common + ' type="' + (o.type || 'text') + '" value="' + esc(value) + '"' + (o.mono ? ' class="mono"' : '') + '>';
+  return '<div class="f ' + (o.cls || '') + '"><label for="' + id + '">' + esc(label) + '</label>' + ctl + '<p class="err" data-err="' + name + '"></p></div>';
+}
+function carsHTML() {
+  return '<div class="li-head"><span></span><span>Марка</span><span>Модель</span><span>Год</span><span>VIN</span><span></span></div>' +
+    F.cars.map((k, i) => {
+      const p = 'car:' + k.key + ':';
+      const inp = (f, lab, cls, extra) => '<div class="' + cls + '"><label class="m-lab" for="' + k.key + f + '">' + lab + '</label><input id="' + k.key + f + '" data-k="' + p + f + '" value="' + esc(k[f]) + '" aria-label="' + lab + ', авто ' + (i + 1) + '"' + (extra || '') + '></div>';
+      return '<div class="li' + (F.selectedCar === k.key ? ' on' : '') + '" data-key="' + k.key + '">' +
+        '<div class="rd"><input type="radio" name="selcar" value="' + k.key + '"' + (F.selectedCar === k.key ? ' checked' : '') + ' aria-label="Автомобиль для этой заявки: ' + (esc(carLabel(k)) || 'авто ' + (i + 1)) + '" title="Автомобиль для этой заявки"></div>' +
+        inp('make', 'Марка', 'c-make') + inp('model', 'Модель', 'c-model') +
+        inp('year', 'Год', 'c-year', ' class="mono" inputmode="numeric" maxlength="4"') +
+        inp('vin', 'VIN', 'c-vin', ' class="mono" maxlength="17" autocapitalize="characters" spellcheck="false"') +
+        '<button type="button" class="x" data-rm="car" aria-label="Удалить автомобиль ' + (i + 1) + '">' + icon('trash') + '</button>' +
+        '<div class="cm"><label class="m-lab" for="' + k.key + 'comment">Комментарий</label><input id="' + k.key + 'comment" data-k="' + p + 'comment" value="' + esc(k.comment) + '" placeholder="Комментарий к авто" aria-label="Комментарий, авто ' + (i + 1) + '"></div>' +
+        '<p class="err" data-err="car:' + k.key + '"></p></div>';
+    }).join('');
+}
+function partsHTML() {
+  return '<div class="li-head"><span>Наименование</span><span>Код</span><span>Кол.</span><span>Закупка</span><span>Продажа</span><span>Сумма</span><span></span></div>' +
+    F.parts.map((x, i) => {
+      const p = 'part:' + x.key + ':';
+      const inp = (f, lab, cls, extra) => '<div class="' + cls + '"><label class="m-lab" for="' + x.key + f + '">' + lab + '</label><input id="' + x.key + f + '" data-k="' + p + f + '" value="' + esc(x[f]) + '" aria-label="' + lab + ', позиция ' + (i + 1) + '"' + (extra || '') + '></div>';
+      return '<div class="li" data-key="' + x.key + '">' +
+        inp('name', 'Наименование', 'c-name') +
+        inp('code', 'Код', 'c-code', ' class="mono" spellcheck="false"') +
+        inp('qty', 'Кол.', 'c-qty', ' class="mono" inputmode="numeric"') +
+        inp('purchase_price', 'Закупка', 'c-buy', ' class="mono" inputmode="numeric"') +
+        inp('sale_price', 'Продажа', 'c-sell', ' class="mono" inputmode="numeric"') +
+        '<div class="c-sum mono"><span class="m-lab">Сумма</span><span data-sum="' + x.key + '">' + fmtInt(toInt(x.qty) * toInt(x.sale_price)) + '</span></div>' +
+        '<button type="button" class="x" data-rm="part" aria-label="Удалить позицию ' + (i + 1) + '">' + icon('trash') + '</button>' +
+        '<p class="err" data-err="part:' + x.key + '"></p></div>';
+    }).join('');
+}
+function totalsCalc() {
+  return F.parts.reduce((a, x) => { const q = toInt(x.qty); a.cost += q * toInt(x.purchase_price); a.sale += q * toInt(x.sale_price); return a; }, { cost: 0, sale: 0 });
+}
+function renderTotals() {
+  const t = totalsCalc(), pr = t.sale - t.cost;
+  F.parts.forEach(x => { const n = $('[data-sum="' + x.key + '"]', el.panel); if (n) n.textContent = fmtInt(toInt(x.qty) * toInt(x.sale_price)); });
+  $('#p-totals').innerHTML = '<dt>Закупка</dt><dd>' + money(t.cost) + '</dd><dt>Продажа</dt><dd>' + money(t.sale) + '</dd><dt>Прибыль</dt><dd class="' + (pr < 0 ? 'neg' : '') + '">' + money(pr) + '</dd>';
+}
+function imagesHTML() {
+  return F.images.map(im => '<div class="im">' + (im.url ? '<img src="' + esc(im.url) + '" alt="Фото к заявке">' : '') + '<button type="button" data-rmimg="' + im.id + '" aria-label="Удалить фото">' + icon('x') + '</button></div>').join('') +
+    F.newImages.map(im => '<div class="im"><img src="' + esc(im.url) + '" alt="Новое фото"><button type="button" data-rmnew="' + im.key + '" aria-label="Удалить фото">' + icon('x') + '</button></div>').join('') +
+    '<label class="im-add" title="Добавить фото">' + icon('image') + '<span class="sr">Добавить фото</span><input type="file" accept="image/*" multiple id="p-file"></label>';
+}
+function renderForm(d) {
+  const c = d.client, r = d.request;
+  el.panel.innerHTML = panelHead(F.id ? 'Заявка' : 'Новая заявка', F.id ? '№ ' + F.id : '') +
+    '<div class="confirm" id="p-confirm" role="alertdialog" aria-label="Несохранённые изменения" hidden><span>Есть несохранённые изменения.</span>' +
+    '<button type="button" class="btn sm" data-keep>Продолжить</button><button type="button" class="btn sm danger" data-discard>Закрыть без сохранения</button></div>' +
+    '<form class="p-form" id="rq-form" novalidate autocomplete="off"><div class="p-body">' +
+
+    '<section class="blk"><h3><b>01</b>Клиент<span class="note" id="lk-note" aria-live="polite"></span></h3><div class="fg">' +
+    fld('phone', 'Телефон', c.phone || '', { mono: true, type: 'tel', attrs: ' inputmode="tel" placeholder="098499997" required' }) +
+    fld('first_name', 'Имя', c.first_name || '') +
+    fld('last_name', 'Фамилия', c.last_name || '') +
+    fld('client_type', 'Тип клиента', c.client_type || 'private', { type: 'select', map: CLIENT_TYPES }) +
+    fld('email', 'Эл. почта', c.email || '', { type: 'email', cls: 's4 full-m', attrs: ' inputmode="email"' }) +
+    fld('address', 'Адрес', c.address || '', { cls: 's6' }) +
+    fld('comment', 'Комментарий о клиенте', c.comment || '', { cls: 's6' }) +
+    '</div></section>' +
+
+    '<section class="blk"><h3><b>02</b>Автомобили клиента<span class="note">Отметьте авто для этой заявки</span></h3>' +
+    '<div class="cars" id="p-cars"></div>' +
+    '<button type="button" class="btn sm add" data-add="car">' + icon('plus') + 'Добавить авто</button></section>' +
+
+    '<section class="blk"><h3><b>03</b>Заявка</h3><div class="fg">' +
+    fld('request_text', 'Что нужно клиенту', r.request_text || '', { type: 'textarea', rows: 4, cls: 's6', attrs: ' placeholder="Запчасти, коды, цены - каждая с новой строки"' }) +
+    '<div class="f s4 full-m"><span class="lab" id="src-lab">Источник</span><div class="seg" role="radiogroup" aria-labelledby="src-lab">' +
+    Object.keys(SOURCES).map(k => '<label><input type="radio" name="source" value="' + k + '"' + ((r.source || 'phone') === k ? ' checked' : '') + '><span>' + icon(SOURCE_ICON[k]) + SOURCES[k] + '</span></label>').join('') + '</div></div>' +
+    fld('status', 'Статус', r.status || 'open', { type: 'select', map: STATUSES, cls: 'full-m' }) +
+    '</div></section>' +
+
+    '<section class="blk"><h3><b>04</b>Работы и запчасти</h3><div class="fg" style="margin-bottom:14px">' +
+    fld('work_done', 'Выполненные работы', r.work_done || '', { type: 'textarea', rows: 2, cls: 's6' }) + '</div>' +
+    '<div class="parts" id="p-parts"></div>' +
+    '<button type="button" class="btn sm add" data-add="part">' + icon('plus') + 'Добавить запчасть</button>' +
+    '<dl class="totals mono" id="p-totals"></dl></section>' +
+
+    '<section class="blk"><h3><b>05</b>Фото</h3><div class="imgs" id="p-imgs"></div><p class="err" data-err="images"></p></section>' +
+
+    '</div><div class="p-foot">' +
+    '<p class="form-msg" id="p-msg" role="alert"></p>' +
+    '<button type="submit" class="btn primary" id="p-save">' + (F.id ? 'Сохранить' : 'Создать заявку') + '</button>' +
+    '<button type="button" class="btn ghost" data-close>Отмена</button>' +
+    '<span class="hint">Enter — сохранить, Esc — закрыть</span><span class="sp"></span>' +
+    (F.id ? '<button type="button" class="btn danger" id="p-del">' + icon('trash') + '<span>Удалить</span></button>' : '') +
+    '</div></form>';
+  $('#p-cars').innerHTML = carsHTML();
+  $('#p-parts').innerHTML = partsHTML();
+  $('#p-imgs').innerHTML = imagesHTML();
+  renderTotals();
+}
+function setCars(list, selectedId) {
+  F.cars = list.map(k => ({ key: key(), id: k.id, make: k.make || '', model: k.model || '', year: k.year ? String(k.year) : '', vin: k.vin || '', comment: k.comment || '' }));
+  if (!F.cars.length) F.cars.push(blankCar());
+  const sel = F.cars.find(k => k.id && k.id === selectedId);
+  F.selectedCar = sel ? sel.key : (selectedId === undefined || !list.length ? F.cars[0].key : null);
+  F.removedCarIds = [];
+}
+async function openRequest(id, prefill) {
+  if (panelMode === 'request' && F && F.dirty) { requestClose(() => openRequest(id, prefill)); return; }
+  const tok = key();
+  F = { tok, id: id || null, clientId: null, origClientId: null, autofilled: false, lookTok: 0, cars: [], parts: [], images: [], newImages: [], removedImages: [], removedCarIds: [], selectedCar: null, dirty: false, busy: false };
+  S.selReq = id || null; S.selClient = null;
+  openPanel('request');
+  let d = { request: {}, client: {}, cars: [], parts: [], images: [] };
+  if (id) {
+    panelLoading('Заявка');
+    el.panel.focus();
+    try { d = await store.getRequest(id); } catch (e) { if (F && F.tok === tok) panelError('Заявка', e, () => { F = null; openRequest(id); }); return; }
+    if (!F || F.tok !== tok) return;
+    F.clientId = F.origClientId = d.client.id;
+  }
+  setCars(d.cars, id ? d.request.car_id : undefined);
+  F.parts = d.parts.map(p => ({ key: key(), name: p.name || '', code: p.code || '', qty: String(p.qty), purchase_price: String(p.purchase_price), sale_price: String(p.sale_price) }));
+  if (!F.parts.length) F.parts.push(blankPart());
+  F.images = d.images;
+  renderForm(d);
+  const form = $('#rq-form');
+  if (prefill && prefill.phone) { form.elements.phone.value = prefill.phone; lookupNow(); form.elements.request_text.focus(); }
+  else (id ? form.elements.request_text : form.elements.phone).focus();
+}
+
+/* Typing an existing phone loads that client and their cars. */
+function note(t) { const n = $('#lk-note'); if (n) n.textContent = t; }
+function fillClient(c) {
+  const f = $('#rq-form').elements;
+  ['first_name', 'last_name', 'address', 'email', 'comment'].forEach(k => { f[k].value = c[k] || ''; });
+  f.client_type.value = c.client_type || 'private';
+}
+async function lookupNow() {
+  if (!F) return;
+  const form = $('#rq-form'); if (!form) return;
+  const ph = digits(form.elements.phone.value), tok = ++F.lookTok, ft = F.tok;
+  if (ph.length < 8) { note(''); return; }
+  let res;
+  try { res = await store.findClientByPhone(ph); } catch (e) { if (F && F.tok === ft && tok === F.lookTok) note('Не удалось проверить номер'); return; }
+  if (!F || F.tok !== ft || tok !== F.lookTok) return;
+  if (res) {
+    if (res.client.id !== F.clientId) {
+      F.clientId = res.client.id; F.autofilled = true;
+      fillClient(res.client);
+      setCars(res.cars);
+      $('#p-cars').innerHTML = carsHTML();
+      note('Клиент найден: данные и авто (' + res.cars.length + ') загружены');
+    } else note(F.autofilled ? 'Клиент найден: данные загружены' : '');
+  } else if (F.autofilled) {
+    F.autofilled = false; F.clientId = null;
+    fillClient({});
+    setCars([]);
+    $('#p-cars').innerHTML = carsHTML();
+    note('Новый клиент');
+  } else if (F.clientId) note('Телефон клиента будет изменён');
+  else note('Новый клиент');
+}
+const lookup = debounce(lookupNow, 350);
+
+function collect() {
+  const f = $('#rq-form').elements;
+  const cars = F.cars.filter(k => k.make.trim() || k.model.trim() || k.year || k.vin || k.comment.trim() || k.id);
+  const parts = F.parts.filter(x => x.name.trim() || x.code.trim() || x.purchase_price || x.sale_price);
+  return {
+    id: F.id,
+    client: { id: F.clientId, phone: digits(f.phone.value), first_name: f.first_name.value.trim(), last_name: f.last_name.value.trim(), address: f.address.value.trim(), email: f.email.value.trim(), client_type: f.client_type.value, comment: f.comment.value.trim() },
+    cars: cars.map(k => ({ key: k.key, id: F.clientId ? k.id : null, make: k.make.trim(), model: k.model.trim(), year: k.year ? toInt(k.year) : null, vin: k.vin.trim() || null, comment: k.comment.trim(), selected: F.selectedCar === k.key })),
+    removedCarIds: F.clientId ? F.removedCarIds.slice() : [],
+    request: { request_text: f.request_text.value.trim(), work_done: f.work_done.value.trim(), source: f.source.value || 'phone', status: f.status.value },
+    parts: parts.map(x => ({ key: x.key, name: x.name.trim(), code: x.code.trim(), qty: toInt(x.qty), purchase_price: toInt(x.purchase_price), sale_price: toInt(x.sale_price) })),
+    newImages: F.newImages.map(n => n.file),
+    removedImages: F.removedImages.slice()
+  };
+}
+function validate(p) {
+  const e = {}, maxY = new Date().getFullYear() + 1;
+  if (!p.client.phone) e.phone = 'Укажите телефон';
+  else if (p.client.phone.length < 8 || p.client.phone.length > 15) e.phone = 'От 8 до 15 цифр';
+  if (p.client.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.client.email)) e.email = 'Проверьте адрес почты';
+  p.cars.forEach(k => {
+    const b = 'car:' + k.key + ':';
+    if (!k.make) e[b + 'make'] = 'Укажите марку';
+    if (k.year !== null && (k.year < 1950 || k.year > maxY)) e[b + 'year'] = 'Год от 1950 до ' + maxY;
+    if (k.vin && !/^[A-Z0-9]{5,17}$/.test(k.vin)) e[b + 'vin'] = 'VIN: от 5 до 17 символов, сейчас ' + k.vin.length;
+  });
+  p.parts.forEach(x => {
+    const b = 'part:' + x.key + ':';
+    if (!x.name) e[b + 'name'] = 'Укажите наименование';
+    if (x.qty < 1) e[b + 'qty'] = 'Количество не меньше 1';
+  });
+  if (!p.request.request_text && !p.parts.length && !p.request.work_done) e.request_text = 'Опишите заявку или добавьте запчасти';
+  return e;
+}
+function showErrors(e) {
+  $$('[aria-invalid]', el.panel).forEach(n => n.removeAttribute('aria-invalid'));
+  $$('.err', el.panel).forEach(n => { n.textContent = ''; });
+  let first = null;
+  Object.keys(e).forEach(k => {
+    const inp = $('[data-k="' + k + '"]', el.panel);
+    if (inp) { inp.setAttribute('aria-invalid', 'true'); if (!first) first = inp; }
+    const box = $('[data-err="' + k + '"]', el.panel) || $('[data-err="' + k.split(':').slice(0, 2).join(':') + '"]', el.panel);
+    if (box && !box.textContent) box.textContent = e[k];
+  });
+  if (first) first.focus();
+}
+function setBusy(on) {
+  if (F) F.busy = on;
+  const b = $('#p-save'); if (b) { b.disabled = on; b.textContent = on ? 'Сохранение…' : (F && F.id ? 'Сохранить' : 'Создать заявку'); }
+}
+async function submitForm() {
+  if (!F || F.busy) return;
+  const p = collect(), errs = validate(p);
+  showErrors(errs);
+  $('#p-msg').textContent = '';
+  if (Object.keys(errs).length) { $('#p-msg').textContent = 'Исправьте отмеченные поля.'; return; }
+  p.cars.forEach(k => { delete k.key; }); p.parts.forEach(x => { delete x.key; });
+  setBusy(true);
+  const wasNew = !F.id;
+  try {
+    await store.saveRequest(p);
+    F.dirty = false;
+    doClose();
+    toast(wasNew ? 'Заявка создана' : 'Заявка сохранена');
+    reloadView();
+  } catch (e) {
+    setBusy(false);
+    const m = $('#p-msg'); if (m) m.textContent = 'Не удалось сохранить. ' + errMsg(e) + '. Данные формы не потеряны.';
+  }
+}
+
+/* delegated panel events */
+el.panel.addEventListener('submit', e => { e.preventDefault(); if (e.target.id === 'rq-form') submitForm(); });
+el.panel.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.isComposing) return;
+  const t = e.target;
+  if ((e.ctrlKey || e.metaKey) && t.tagName === 'TEXTAREA') { e.preventDefault(); submitForm(); return; }
+  /* Parts table: Enter walks cell to cell, and from the very last cell opens a new row. Never submits. */
+  if (F && t.tagName === 'INPUT' && t.dataset.k && t.dataset.k.indexOf('part:') === 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) {
+    e.preventDefault();
+    const cells = $$('#p-parts input[data-k]'), i = cells.indexOf(t);
+    if (i !== -1 && i < cells.length - 1) { cells[i + 1].focus(); cells[i + 1].select(); return; }
+    const x = blankPart(); F.parts.push(x); F.dirty = true;
+    $('#p-parts').innerHTML = partsHTML();
+    $('[data-k="part:' + x.key + ':name"]').focus();
+  }
+});
+el.panel.addEventListener('input', e => {
+  if (!F || panelMode !== 'request') return;
+  const t = e.target, k = t.dataset.k;
+  if (t.type === 'file') return;
+  F.dirty = true;
+  if (!k) return;
+  if (k === 'phone') { lookup(); return; }
+  const parts = k.split(':');
+  if (parts.length !== 3) return;
+  const row = (parts[0] === 'car' ? F.cars : F.parts).find(x => x.key === parts[1]);
+  if (!row) return;
+  const f = parts[2];
+  if (f === 'vin') t.value = t.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 17);
+  else if (f === 'year') t.value = digits(t.value).slice(0, 4);
+  else if (f === 'qty' || f === 'purchase_price' || f === 'sale_price') t.value = digits(t.value).slice(0, 10);
+  row[f] = t.value;
+  if (parts[0] === 'part') renderTotals();
+});
+el.panel.addEventListener('change', e => {
+  if (!F || panelMode !== 'request') return;
+  const t = e.target;
+  if (t.name === 'selcar') { F.selectedCar = t.value; F.dirty = true; $$('#p-cars .li').forEach(n => n.classList.toggle('on', n.dataset.key === t.value)); }
+  else if (t.id === 'p-file') {
+    const errBox = $('[data-err="images"]', el.panel); errBox.textContent = '';
+    Array.from(t.files || []).forEach(file => {
+      if (!/^image\//.test(file.type)) { errBox.textContent = 'Можно добавлять только изображения'; return; }
+      if (file.size > 8 * 1024 * 1024) { errBox.textContent = 'Файл больше 8 МБ не добавлен: ' + file.name; return; }
+      F.newImages.push({ key: key(), file, url: URL.createObjectURL(file) });
+    });
+    F.dirty = true;
+    $('#p-imgs').innerHTML = imagesHTML();
+  }
+});
+el.panel.addEventListener('click', e => {
+  const t = e.target.closest('button');
+  if (!t) return;
+  if (t.hasAttribute('data-close')) { requestClose(); return; }
+  if (t.dataset.req) { openRequest(Number(t.dataset.req)); return; }
+  if (t.dataset.newfor) { const ph = t.dataset.newfor; F = null; openRequest(null, { phone: ph }); return; }
+  if (t.hasAttribute('data-keep')) { $('#p-confirm').hidden = true; pendingClose = null; return; }
+  if (t.hasAttribute('data-discard')) { const after = pendingClose; doClose(); if (after) after(); return; }
+  if (!F) return;
+  if (t.dataset.add === 'car') {
+    const k = blankCar(); F.cars.push(k); if (!F.selectedCar) F.selectedCar = k.key; F.dirty = true;
+    $('#p-cars').innerHTML = carsHTML(); $('[data-k="car:' + k.key + ':make"]').focus();
+  } else if (t.dataset.add === 'part') {
+    const x = blankPart(); F.parts.push(x); F.dirty = true;
+    $('#p-parts').innerHTML = partsHTML(); $('[data-k="part:' + x.key + ':name"]').focus();
+  } else if (t.dataset.rm === 'car') {
+    const kk = t.closest('.li').dataset.key, i = F.cars.findIndex(k => k.key === kk);
+    if (i === -1) return;
+    if (F.cars[i].id) F.removedCarIds.push(F.cars[i].id);
+    F.cars.splice(i, 1);
+    if (!F.cars.length) F.cars.push(blankCar());
+    if (F.selectedCar === kk) F.selectedCar = F.cars.length === 1 ? F.cars[0].key : null;
+    F.dirty = true; $('#p-cars').innerHTML = carsHTML();
+  } else if (t.dataset.rm === 'part') {
+    const kk = t.closest('.li').dataset.key, i = F.parts.findIndex(x => x.key === kk);
+    if (i === -1) return;
+    F.parts.splice(i, 1);
+    if (!F.parts.length) F.parts.push(blankPart());
+    F.dirty = true; $('#p-parts').innerHTML = partsHTML(); renderTotals();
+  } else if (t.dataset.rmimg) {
+    const i = F.images.findIndex(im => String(im.id) === t.dataset.rmimg);
+    if (i !== -1) { F.removedImages.push({ id: F.images[i].id, path: F.images[i].path }); F.images.splice(i, 1); F.dirty = true; $('#p-imgs').innerHTML = imagesHTML(); }
+  } else if (t.dataset.rmnew) {
+    const i = F.newImages.findIndex(im => im.key === t.dataset.rmnew);
+    if (i !== -1) { URL.revokeObjectURL(F.newImages[i].url); F.newImages.splice(i, 1); $('#p-imgs').innerHTML = imagesHTML(); }
+  } else if (t.id === 'p-del') {
+    if (t.dataset.armed !== '1') { t.dataset.armed = '1'; $('span:last-child', t).textContent = 'Точно удалить?'; setTimeout(() => { if (document.contains(t)) { t.dataset.armed = ''; $('span:last-child', t).textContent = 'Удалить'; } }, 4000); return; }
+    const id = F.id; t.disabled = true;
+    store.deleteRequest(id).then(() => { if (F) F.dirty = false; doClose(); toast('Заявка удалена'); reloadView(); })
+      .catch(err => { t.disabled = false; const m = $('#p-msg'); if (m) m.textContent = 'Не удалось удалить. ' + errMsg(err) + '.'; });
+  }
+});
+
+/* ---------- auth + boot ---------- */
+function startApp() {
+  el.login.hidden = true; el.app.hidden = false;
+  $('#demo-badge').hidden = true;
+  $('#signout').hidden = DEMO;
+  const b = $('#st-bar'), f = new Date(); f.setDate(f.getDate() - 30);
+  b.elements.from.value = S.st.from = ymd(f); b.elements.to.value = S.st.to = ymd(new Date());
+  showView('requests');
+}
+function showLogin() {
+  if (panelMode) { if (F) F.dirty = false; doClose(); }
+  el.app.hidden = true; el.login.hidden = false;
+  $('#li-email').focus();
+}
+function loginError(k, msg) { const p = $('[data-err="' + k + '"]', el.login); p.textContent = msg; $('[name="' + k + '"]', el.login).setAttribute('aria-invalid', 'true'); }
+$('#login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target.elements, btn = $('#login-btn'), msg = $('#login-msg');
+  $$('.err', el.login).forEach(n => { n.textContent = ''; }); $$('[aria-invalid]', el.login).forEach(n => n.removeAttribute('aria-invalid')); msg.textContent = '';
+  const email = f.email.value.trim(), password = f.password.value;
+  let bad = false;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { loginError('email', 'Введите адрес почты'); bad = true; }
+  if (!password) { loginError('password', 'Введите пароль'); bad = true; }
+  if (bad) { $('[aria-invalid]', el.login).focus(); return; }
+  btn.disabled = true; btn.textContent = 'Вход…';
+  try {
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) msg.textContent = errMsg(error) + '. [' + (error.status || '') + ' ' + (error.code || '') + ' ' + (error.message || '') + ']';
+    else f.password.value = '';
+  } catch (err) {
+    msg.textContent = errMsg(err) + '. [' + ((err && err.message) || err) + ']';
+  } finally { btn.disabled = false; btn.textContent = 'Войти'; }
+});
+$('#signout').addEventListener('click', () => requestClose(() => { if (sb) sb.auth.signOut(); }));
+
+async function boot() {
+  if (DEMO) { store = createDemoStore(); startApp(); return; }
+  if (!window.supabase || !window.supabase.createClient) {
+    el.login.hidden = false; $('#login-btn').disabled = true;
+    $('#login-msg').textContent = 'Не удалось загрузить библиотеку Supabase. Проверьте интернет и обновите страницу.';
+    return;
+  }
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  store = createSupabaseStore(sb);
+  let signedIn = false;
+  sb.auth.onAuthStateChange((event, session) => {
+    if (session && !signedIn) { signedIn = true; setTimeout(startApp, 0); }
+    else if (!session && (signedIn || event === 'INITIAL_SESSION' || event === 'SIGNED_OUT')) { signedIn = false; setTimeout(showLogin, 0); }
+  });
+}
+function autosize(t) { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 2) + 'px'; }
+document.addEventListener('input', e => { if (e.target.tagName === 'TEXTAREA') autosize(e.target); });
+new MutationObserver(() => $$('textarea', el.panel).forEach(autosize)).observe(el.panel, { childList: true, subtree: true });
+window.addEventListener('resize', () => $$('textarea', el.panel).forEach(autosize));
+boot();
+})();
+</script>
+</body>
+</html>
