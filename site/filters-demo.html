@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Демо — Склад фильтров</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=Roboto+Mono:wght@500;700&display=swap">
+<style>
+[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+img{max-width:100%}
+
+/* Layout: красная шапка → сводка → подбор по машине → карточки фильтров с −/+ → журнал движений */
+:root{
+  --brand:#C8102E; --brand-ink:#fff; --brand-deep:#8E0B20;
+  --bg:#fff; --surface:#FBF5F6; --line:#EADADD; --fg:#1E1416; --muted:#6E5A5E;
+  --ok:#1F7A3A; --warn:#B26A00; --bad:#C8102E; --hl:#FFF1C9;
+  --font-ui:"Rubik","Segoe UI",system-ui,sans-serif;
+  --font-num:"Roboto Mono",ui-monospace,Consolas,monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--brand:#E0324B;--brand-deep:#B5182F;--bg:#17121A;--surface:#211A1F;--line:#3A2E34;--fg:#F4ECEE;--muted:#B39FA4;--ok:#4CC27A;--warn:#F2A007;--bad:#FF6B6B;--hl:#4A3A10;color-scheme:dark}}
+:root[data-theme="dark"]{--brand:#E0324B;--brand-deep:#B5182F;--bg:#17121A;--surface:#211A1F;--line:#3A2E34;--fg:#F4ECEE;--muted:#B39FA4;--ok:#4CC27A;--warn:#F2A007;--bad:#FF6B6B;--hl:#4A3A10;color-scheme:dark}
+
+*{box-sizing:border-box}
+html{font-size:18px}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-ui);line-height:1.4}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--brand)}
+.wrap{max-width:1150px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+
+header{background:var(--brand);color:var(--brand-ink);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-block:12px}
+h1{margin:0;font-size:1.5rem;font-weight:800;text-wrap:balance}
+h1 small{display:block;font-size:.65rem;font-weight:500;opacity:.85;letter-spacing:.06em;text-transform:uppercase}
+header .btn{background:var(--brand-ink);color:var(--brand);border-color:var(--brand-ink)}
+
+main .wrap{display:grid;gap:20px;padding-block:20px 60px}
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;min-width:0}
+.stat b{display:block;font-family:var(--font-num);font-size:1.45rem;font-variant-numeric:tabular-nums;line-height:1.15;overflow-wrap:anywhere}
+.stat span{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.stat.alert b{color:var(--bad)}
+
+.pick{border:2px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:12px}
+.pick h2{font-size:1rem;margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.pick-grid{display:grid;grid-template-columns:1.2fr 1.2fr .7fr 1fr 1fr;gap:10px}
+.inp,select.inp{width:100%;min-width:0;font-size:1rem;padding:12px 14px;border:2px solid var(--line);border-radius:12px;background:var(--bg)}
+.inp:focus{border-color:var(--brand);outline:none}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{border:2px solid var(--line);background:var(--bg);border-radius:99px;padding:8px 14px;font-weight:500;font-size:.85rem}
+.tab[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.hint{font-size:.8rem;color:var(--muted)}
+
+.btn{border-radius:var(--r);padding:12px 18px;font-weight:700;font-size:.95rem;background:var(--surface);border:2px solid var(--line)}
+.btn.primary{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+.btn.primary:hover{background:var(--brand-deep);border-color:var(--brand-deep)}
+.btn.danger{background:transparent;color:var(--bad);border-color:var(--bad)}
+.btn.small{padding:8px 12px;font-size:.8rem}
+.link{background:none;border:0;color:var(--muted);text-decoration:underline;font-size:.8rem;padding:6px}
+
+.filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.card{border:2px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:10px;background:var(--bg);min-width:0;align-content:start}
+.card.low{border-color:var(--warn)} .card.out{border-color:var(--bad)}
+.card-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.code{font-family:var(--font-num);font-size:1.3rem;font-weight:700;overflow-wrap:anywhere}
+.brand{font-weight:500;color:var(--muted);font-size:.9rem}
+.chips{display:grid;gap:5px;justify-items:end}
+.chip{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:99px;white-space:nowrap;border:1px solid currentColor}
+.chip.ok{color:var(--ok)} .chip.low{color:var(--warn)} .chip.out{color:var(--bad)} .chip.kind{color:var(--muted)}
+.fits{display:grid;gap:3px;font-size:.8rem;max-height:7.5em;overflow:auto;border-top:1px dashed var(--line);padding-top:8px}
+.fit{display:flex;gap:6px;min-width:0}
+.fit b{font-weight:500}
+.fit span{color:var(--muted)}
+.fit.match{background:var(--hl);border-radius:6px;padding:1px 4px;margin-inline:-4px}
+.meta{font-size:.75rem;color:var(--muted);overflow-wrap:anywhere}
+.stock{display:flex;align-items:center;gap:10px}
+.qbtn{width:60px;height:60px;border-radius:var(--r);border:0;font-size:1.9rem;font-weight:800;line-height:1;flex:none}
+.qbtn.minus{background:var(--surface);color:var(--fg);border:2px solid var(--line)}
+.qbtn.plus{background:var(--brand);color:var(--brand-ink)}
+.qbtn:disabled{opacity:.35;cursor:not-allowed}
+.qty{flex:1;text-align:center;min-width:0}
+.qty b{display:block;font-family:var(--font-num);font-size:2.2rem;line-height:1;font-variant-numeric:tabular-nums}
+.qty span{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.prices{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);gap:8px;flex-wrap:wrap;align-items:center}
+.prices b{color:var(--fg);font-family:var(--font-num)}
+
+h2.sec{font-size:1.15rem;margin:0}
+.log{border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.log-row{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.log-row:first-child{border-top:0}
+.sign{font-family:var(--font-num);font-weight:700;font-size:1.1rem;min-width:3em;text-align:right}
+.sign.sale{color:var(--bad)} .sign.buy{color:var(--ok)}
+.what{min-width:0;overflow-wrap:anywhere}
+.what small{display:block;color:var(--muted);font-size:.72rem}
+.sum{font-family:var(--font-num);font-size:.82rem;color:var(--muted);text-align:right}
+.empty{padding:26px 18px;text-align:center;color:var(--muted);border:2px dashed var(--line);border-radius:var(--r)}
+.empty strong{display:block;color:var(--fg);font-size:1.1rem;margin-bottom:6px}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:grid;place-items:center;z-index:20;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:calc(16px + env(safe-area-inset-top,0px)) calc(16px + env(safe-area-inset-bottom,0px))}
+.sheet{background:var(--bg);color:var(--fg);border-radius:18px;width:min(640px,100%);max-height:100%;overflow:auto;padding:20px;display:grid;gap:14px}
+.sheet h3{margin:0;font-size:1.3rem}
+.field{display:grid;gap:5px;min-width:0}
+.field label{font-size:.78rem;font-weight:500;color:var(--muted)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.fit-edit{display:grid;gap:8px}
+.fit-row{display:grid;grid-template-columns:1.1fr 1.1fr .75fr .75fr 1.2fr auto;gap:6px;align-items:center}
+.fit-row .inp{padding:9px 10px;font-size:.9rem}
+.xbtn{width:38px;height:38px;border-radius:10px;border:2px solid var(--line);background:var(--surface);font-weight:700}
+.fit-head{display:grid;grid-template-columns:1.1fr 1.1fr .75fr .75fr 1.2fr 38px;gap:6px;font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.autobar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.autobar .hint{flex:1 1 220px;min-width:0}
+.glinks{display:flex;gap:8px;flex-wrap:wrap}
+.card-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:8px}
+.card-foot .glink{padding:6px 10px;font-size:.75rem;border-width:1px}
+.glink{text-decoration:none;color:var(--fg);display:inline-flex;align-items:center}
+.nofit{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:8px;font-size:.82rem;color:var(--muted)}
+details.more{border:1px solid var(--line);border-radius:12px}
+details.more summary{cursor:pointer;padding:12px 14px;font-weight:500;font-size:.88rem;color:var(--muted)}
+.more-body{display:grid;gap:10px;padding:0 14px 14px}
+.hbtns{display:flex;gap:8px;flex-wrap:wrap}
+header .btn.ghost-h{background:transparent;color:var(--brand-ink);border-color:rgba(255,255,255,.6)}
+header .btn.ghost-h[aria-pressed="true"]{background:var(--brand-deep);border-color:var(--brand-deep)}
+.demobar{background:var(--hl);color:var(--fg);font-size:.85rem}
+.demobar .wrap{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-block:8px;flex-wrap:wrap}
+.two{display:grid;grid-template-columns:1.3fr 1fr;gap:14px}
+.panel{border:2px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:10px;align-content:start;min-width:0}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.kpis div{background:var(--surface);border-radius:12px;padding:10px 12px;min-width:0}
+.kpis span{display:block;font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.kpis b{font-family:var(--font-num);font-size:1.2rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.kpis b.pos{color:var(--ok)}
+.bars{display:grid;gap:6px}
+.bar-row{display:grid;grid-template-columns:5.5em 1fr 2.5em;gap:10px;align-items:center;font-size:.85rem}
+.bar-code,.code-s{font-family:var(--font-num);font-weight:700}
+.bar-track{height:12px;background:var(--surface);border-radius:99px;overflow:hidden}
+.bar-fill{display:block;height:100%;background:var(--brand);border-radius:99px}
+.bar-row b{font-family:var(--font-num);text-align:right}
+.reorder{display:grid;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.reorder .hint{padding:12px}
+.ro-row{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);font-size:.88rem}
+.ro-row:first-child{border-top:0}
+.ro-left{color:var(--bad);font-size:.8rem}
+.ro-want{font-size:.8rem;color:var(--muted)} .ro-want b{color:var(--fg);font-family:var(--font-num)}
+.pitch{background:var(--brand);color:var(--brand-ink);border-radius:var(--r);padding:22px;display:grid;gap:8px}
+.pitch h2{margin:0;font-size:1.4rem;font-weight:800;text-wrap:balance}
+.pitch p{margin:0;max-width:62ch}
+.pitch-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.pitch-cta{font-weight:800;background:var(--brand-ink);color:var(--brand);border-radius:12px;padding:14px 22px;text-decoration:none;font-size:1.05rem}
+.pitch-cta:hover{opacity:.9}
+.pitch-bot{font-size:.85rem;opacity:.9;user-select:all;overflow-wrap:anywhere}
+header a.buy-h{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;background:var(--brand-deep);border-color:var(--brand-deep)}
+.projects{display:grid;gap:12px}
+.prj-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.prj{border:2px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:8px;align-content:start;min-width:0}
+.prj.prj-on{border-color:var(--brand)}
+.prj h3{margin:0;font-size:1.15rem}
+.prj p{margin:0;color:var(--muted);font-size:.9rem}
+.prj-tag{justify-self:start;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:99px;border:1px solid currentColor;color:var(--muted)}
+.prj-on .prj-tag{color:var(--brand)}
+.prj-btn{justify-self:start;text-decoration:none;margin-top:4px;display:inline-flex}
+.prj-btns{display:flex;gap:8px;flex-wrap:wrap}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper .inp{text-align:center;font-family:var(--font-num);font-size:1.8rem;font-weight:700}
+.actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.err{color:var(--bad);font-size:.85rem;min-height:1.2em;margin:0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:12px 20px;border-radius:12px;font-weight:500;z-index:30;max-width:calc(100% - 32px)}
+.note{font-size:.75rem;color:var(--muted)}
+
+@media (max-width:820px){
+  .prj-grid{grid-template-columns:1fr}
+  .two{grid-template-columns:1fr}
+  .stats .stat:last-child{grid-column:1/-1}
+  .pick-grid #q{grid-column:1/-1;order:-1}
+  .hbtns{width:100%} .hbtns .btn{flex:1;white-space:nowrap;padding-inline:10px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pick-grid{grid-template-columns:1fr 1fr}
+  .filters{grid-template-columns:1fr}
+  .row3{grid-template-columns:1fr 1fr}
+  .fit-head{display:none}
+  .fit-row{grid-template-columns:1fr 1fr;padding:8px;border:1px solid var(--line);border-radius:10px}
+  .fit-row .xbtn{grid-column:2;justify-self:end}
+  .log-row{grid-template-columns:auto 1fr}
+  .log-row .sum,.log-row .undo{grid-column:2;text-align:left;justify-self:start}
+}
+@media (max-width:460px){.row2,.row3{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1><small>Автосервис · склад</small>Фильтры</h1>
+    <div class="hbtns"><button class="btn ghost-h" id="demoBtn" aria-pressed="false" hidden>Демо</button><a class="btn ghost-h buy-h" href="https://t.me/autoservice_databaase_bot?start=filters_ru" target="_blank" rel="noopener">Купить</a><button class="btn" id="addBtn">+ Новый фильтр</button></div>
+  </div>
+</header>
+
+<div id="demoBar" class="demobar" hidden><div class="wrap"><span><b>Демо.</b> Примерные фильтры и продажи — нажимайте что угодно: продавайте, добавляйте, ищите по машине. После обновления всё вернётся.</span><button class="link" id="demoExit" hidden>Выйти</button><a class="link" href="https://t.me/autoservice_databaase_bot?start=filters_ru" target="_blank" rel="noopener">Купить через Telegram</a></div></div>
+<main>
+  <div class="wrap">
+    <section class="stats" aria-label="Сводка">
+      <div class="stat"><span>Позиций</span><b id="sPos">0</b></div>
+      <div class="stat"><span>Штук на складе</span><b id="sQty">0</b></div>
+      <div class="stat" id="sLowBox"><span>Мало / нет</span><b id="sLow">0</b></div>
+      <div class="stat"><span>Склад по закупке</span><b id="sVal">0 ֏</b></div>
+      <div class="stat"><span>Продано сегодня</span><b id="sToday">0 ֏</b></div>
+    </section>
+
+    <section class="pick" aria-label="Подбор фильтра">
+      <h2>Подбор по машине <button class="link" id="clearPick">Сбросить</button></h2>
+      <div class="pick-grid">
+        <input class="inp" id="pMake" list="dlMakes" placeholder="Марка" autocomplete="off">
+        <input class="inp" id="pModel" list="dlModels" placeholder="Модель" autocomplete="off">
+        <input class="inp" id="pYear" type="number" inputmode="numeric" min="1980" max="2035" placeholder="Год">
+        <input class="inp" id="pEngine" list="dlEngines" placeholder="Мотор (2.4, G4KJ)" autocomplete="off">
+        <input class="inp" id="q" type="search" placeholder="Артикул, бренд, аналог…">
+      </div>
+      <div class="tabs" role="group" aria-label="Тип фильтра">
+        <button class="tab" data-kind="" aria-pressed="true">Все</button>
+        <button class="tab" data-kind="oil" aria-pressed="false">Масляные</button>
+        <button class="tab" data-kind="air" aria-pressed="false">Воздушные</button>
+        <button class="tab" data-kind="cabin" aria-pressed="false">Салонные</button>
+        <button class="tab" data-kind="fuel" aria-pressed="false">Топливные</button>
+        <button class="tab" data-kind="other" aria-pressed="false">Другие</button>
+        <button class="tab" data-stock="1" aria-pressed="false">Только в наличии</button>
+      </div>
+      <div class="hint" id="pickHint">Введите машину, и останутся только подходящие фильтры.</div>
+    </section>
+
+    <section id="list" class="filters" aria-live="polite">
+      <div class="empty" style="grid-column:1/-1"><strong>Загружаю склад…</strong></div>
+    </section>
+
+    <section class="two">
+      <div class="panel">
+        <div class="panel-head"><h2 class="sec">Продажи</h2>
+          <div class="tabs" role="group" aria-label="Период"><button class="tab ptab" data-p="day" aria-pressed="true">Сегодня</button><button class="tab ptab" data-p="week" aria-pressed="false">7 дней</button><button class="tab ptab" data-p="month" aria-pressed="false">30 дней</button></div></div>
+        <div class="kpis"><div><span>Выручка</span><b id="rRev">0 ֏</b></div><div><span>Прибыль</span><b id="rProfit" class="pos">0 ֏</b></div><div><span>Продано, шт.</span><b id="rPcs">0</b></div></div>
+        <div class="hint">Чаще всего берут</div>
+        <div id="rTop" class="bars"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2 class="sec">Что докупить</h2><span class="hint" id="reorderCount"></span></div>
+        <div id="reorder" class="reorder"></div>
+        <button class="btn small" id="copyOrder" hidden>Скопировать список для поставщика</button>
+        <textarea id="orderText" class="inp" rows="5" hidden aria-label="Список заказа"></textarea>
+      </div>
+    </section>
+
+    <section style="display:grid;gap:10px">
+      <h2 class="sec">Журнал движений</h2>
+      <div id="log" class="log"><div class="empty" style="border:0">Продажи и закупки появятся здесь.</div></div>
+    </section>
+    <section class="projects" aria-labelledby="prjTitle">
+      <h2 class="sec" id="prjTitle">Мои проекты для автосервисов</h2>
+      <div class="prj-grid">
+        <article class="prj prj-on">
+          <span class="prj-tag">Вы смотрите</span>
+          <h3>Склад фильтров</h3>
+          <p>Остатки фильтров, подбор по машине, продажи и прибыль, список закупки.</p>
+          <a class="btn primary prj-btn" href="https://t.me/autoservice_databaase_bot?start=filters_ru" target="_blank" rel="noopener">Купить в Telegram</a>
+        </article>
+        <article class="prj">
+          <span class="prj-tag">Проект 2</span>
+          <h3>Журнал заявок</h3>
+          <p>Программа для автосервиса: клиент, телефон, машина и VIN, что сделали, какие запчасти, закупка и цена продажи.</p>
+          <div class="prj-btns"><a class="btn prj-btn" href="demo.html">Открыть демо</a><a class="btn primary prj-btn" href="https://t.me/autoservice_databaase_bot?start=site_ru" target="_blank" rel="noopener">Купить в Telegram</a></div>
+        </article>
+      </div>
+      <p class="hint">Оба проекта покупаются через бота @autoservice_databaase_bot.</p>
+    </section>
+    <section class="pitch">
+      <h2>Такой склад — для вашего сервиса</h2>
+      <p>Ваши фильтры и цены, подбор по машине, продажи и прибыль, список закупки. Работает с любого телефона, вся команда видит один склад.</p>
+      <div class="pitch-row"><a class="pitch-cta" href="https://t.me/autoservice_databaase_bot?start=filters_ru" target="_blank" rel="noopener">Купить в Telegram</a><span class="pitch-bot">@autoservice_databaase_bot · оплата и подключение в боте</span></div>
+    </section>
+    <p class="note" id="storeNote" hidden></p>
+  </div>
+</main>
+
+<datalist id="dlMakes"></datalist>
+<datalist id="dlModels"></datalist>
+<datalist id="dlEngines"></datalist>
+<div id="modal" class="modal" hidden></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const money = n => Math.round(+n || 0).toLocaleString("ru-RU") + " ֏";
+  const fmtDate = t => new Date(t).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+  const norm = s => String(s ?? "").toLowerCase().replace(/[\s\-_.]/g,"");
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+  const KINDS = {oil:"Масляный",air:"Воздушный",cabin:"Салонный",fuel:"Топливный",other:"Другой"};
+  const YEAR_NOW = new Date().getFullYear();
+
+  let filters = [], moves = [], db = null, busy = false, demo = false;
+  const real = { filters:[], moves:[] };
+  const mem = () => demo || !db;
+  const after = () => { if (!demo) local.save(); fillLists(); render(); };
+  const ui = { kind:"", stock:false };
+
+  /* ---------- хранилище ---------- */
+  const local = {
+    load(){ try{ const d = JSON.parse(localStorage.getItem("filters-v2")||"{}"); real.filters=d.filters||[]; real.moves=d.moves||[]; }catch(e){} },
+    save(){ if (db) return; try{ localStorage.setItem("filters-v2", JSON.stringify({filters,moves})) }catch(e){} }
+  };
+  async function putFilter(f){
+    const {id, ...body} = f;
+    if (!mem()) await db.collection("filters").doc(id).set(body);
+    else { const i = filters.findIndex(x=>x.id===id); i<0?filters.push(f):filters[i]=f; after(); }
+  }
+  async function dropFilter(id){
+    if (!mem()) await db.collection("filters").doc(id).delete();
+    else { filters = filters.filter(x=>x.id!==id); after(); }
+  }
+  async function setQty(id, qty){
+    if (!mem()) await db.collection("filters").doc(id).update({qty, updatedAt:Date.now()});
+    else { const f = filters.find(x=>x.id===id); if (f){ f.qty=qty; f.updatedAt=Date.now(); } after(); }
+  }
+  async function freshQty(id){
+    if (!mem()){ const s = await db.collection("filters").doc(id).get(); return s.exists ? (+s.data().qty||0) : null; }
+    const f = filters.find(x=>x.id===id); return f ? (+f.qty||0) : null;
+  }
+  async function putMove(m){
+    const {id, ...body} = m;
+    if (!mem()) await db.collection("moves").doc(id).set(body);
+    else { moves.unshift(m); after(); }
+  }
+  async function dropMove(id){
+    if (!mem()) await db.collection("moves").doc(id).delete();
+    else { moves = moves.filter(x=>x.id!==id); after(); }
+  }
+
+  /* ---------- подбор ---------- */
+  function pick(){
+    return { make:norm($("#pMake").value), model:norm($("#pModel").value),
+      year:parseInt($("#pYear").value,10)||0, engine:norm($("#pEngine").value), q:norm($("#q").value) };
+  }
+  function fitMatches(fit, p){
+    if (p.make && !norm(fit.make).includes(p.make)) return false;
+    if (p.model && !norm(fit.model).includes(p.model)) return false;
+    if (p.year){ const a=+fit.yearFrom||0, b=+fit.yearTo||9999; if (p.year<a || p.year>b) return false; }
+    if (p.engine && !norm(fit.engine).includes(p.engine)) return false;
+    return true;
+  }
+  const carActive = p => !!(p.make||p.model||p.year||p.engine);
+  const fitText = f => [f.make,f.model].filter(Boolean).join(" ");
+  const yearsText = f => (f.yearFrom||f.yearTo) ? `${f.yearFrom||"…"}–${f.yearTo||"н.в."}` : "";
+  const carLabel = p => [$("#pMake").value.trim(),$("#pModel").value.trim(),$("#pYear").value.trim(),$("#pEngine").value.trim()].filter(Boolean).join(" ");
+
+  function status(f){ const q=+f.qty||0, m=+f.min||0; return q<=0?"out":q<=m?"low":"ok"; }
+  const statusText = {ok:"В наличии",low:"Мало",out:"Нет"};
+
+  function fillLists(){
+    const makes=new Set(), models=new Set(), engines=new Set();
+    const pm = norm($("#pMake").value);
+    filters.forEach(f => (f.fits||[]).forEach(x => {
+      if (x.make) makes.add(x.make.trim());
+      if (x.model && (!pm || norm(x.make).includes(pm))) models.add(x.model.trim());
+      if (x.engine) engines.add(x.engine.trim());
+    }));
+    const opt = s => [...s].sort((a,b)=>a.localeCompare(b)).map(v=>`<option value="${esc(v)}">`).join("");
+    $("#dlMakes").innerHTML = opt(makes); $("#dlModels").innerHTML = opt(models); $("#dlEngines").innerHTML = opt(engines);
+  }
+
+  /* ---------- отрисовка ---------- */
+  function render(){
+    const p = pick(), car = carActive(p);
+    const list = filters.slice().sort((a,b)=>(a.code||"").localeCompare(b.code||""))
+      .filter(f => !ui.kind || (f.kind||kindFromCode(f.code))===ui.kind)
+      .filter(f => !ui.stock || (+f.qty||0)>0)
+      .filter(f => !p.q || norm([f.code,f.brand,f.oem,f.analogs,f.shelf].join(" ")).includes(p.q))
+      .filter(f => !car || (f.fits||[]).some(x=>fitMatches(x,p)));
+
+    const today = new Date(); today.setHours(0,0,0,0);
+    $("#sPos").textContent = filters.length;
+    $("#sQty").textContent = filters.reduce((s,f)=>s+(+f.qty||0),0).toLocaleString("ru-RU");
+    const low = filters.filter(f=>status(f)!=="ok").length;
+    $("#sLow").textContent = low; $("#sLowBox").classList.toggle("alert", low>0);
+    $("#sVal").textContent = money(filters.reduce((s,f)=>s+(+f.qty||0)*(+f.buy||0),0));
+    $("#sToday").textContent = money(moves.filter(m=>m.type==="sale" && m.ts>=today.getTime()).reduce((s,m)=>s+m.qty*m.price,0));
+
+    $("#pickHint").textContent = car
+      ? (list.length ? `Подходит: ${list.length} ${plural(list.length,"фильтр","фильтра","фильтров")} для «${carLabel(p)}». Строки с этой машиной подсвечены.` : `Для «${carLabel(p)}» в базе ничего нет. Проверьте написание или добавьте машину в карточку фильтра.`)
+      : "Введите машину, и останутся только подходящие фильтры.";
+
+    const el = $("#list");
+    if (!filters.length) {
+      el.innerHTML = `<div class="empty" style="grid-column:1/-1"><strong>Склад пока пуст</strong>Нажмите «+ Новый фильтр» и введите код, например C222. Кнопка Google сразу покажет, к каким машинам он подходит.</div>`;
+    } else if (!list.length) {
+      el.innerHTML = `<div class="empty" style="grid-column:1/-1"><strong>Ничего не найдено</strong>Уберите часть условий подбора или нажмите «Сбросить».</div>`;
+    } else {
+      el.innerHTML = list.map(f => {
+        const st = status(f), fits = f.fits||[];
+        const fitsHtml = fits.length ? `<div class="fits">${fits.map(x=>`
+            <div class="fit ${car&&fitMatches(x,p)?"match":""}"><b>${esc(fitText(x))}</b><span>${esc(yearsText(x))}${x.engine?" · "+esc(x.engine):""}</span></div>`).join("")}</div>`
+          : `<div class="nofit"><span>Машины не указаны</span></div>`;
+        const extra = [f.oem?"OEM: "+f.oem:"", f.analogs?"Аналоги: "+f.analogs:"", f.shelf?"Полка: "+f.shelf:""].filter(Boolean).join(" · ");
+        return `<article class="card ${st==="ok"?"":st}">
+          <div class="card-top">
+            <div style="min-width:0"><div class="code">${esc(f.code)}</div>${f.brand?`<div class="brand">${esc(f.brand)}</div>`:""}</div>
+            <div class="chips"><span class="chip ${st}">${statusText[st]}</span><span class="chip kind">${KINDS[f.kind||kindFromCode(f.code)]}</span>${f.example?'<span class="chip kind">пример</span>':""}</div>
+          </div>
+          ${fitsHtml}
+          ${extra?`<div class="meta">${esc(extra)}</div>`:""}
+          <div class="stock">
+            <button class="qbtn minus" data-act="sale" data-id="${f.id}" ${(+f.qty||0)<=0?"disabled":""} aria-label="Продать ${esc(f.code)}">−</button>
+            <div class="qty"><b>${+f.qty||0}</b><span>шт. · мин. ${+f.min||0}</span></div>
+            <button class="qbtn plus" data-act="buy" data-id="${f.id}" aria-label="Приход ${esc(f.code)}">+</button>
+          </div>
+          <div class="prices"><span>Закупка <b>${money(f.buy)}</b></span><span>Продажа <b>${money(f.sell)}</b></span></div>
+          <div class="card-foot"><button class="link" data-act="edit" data-id="${f.id}">Изменить</button><span class="glinks">${gLinks(f.code)}</span></div>
+        </article>`; }).join("");
+    }
+
+    renderReport();
+    const lg = $("#log");
+    const recent = moves.slice().sort((a,b)=>b.ts-a.ts).slice(0,60);
+    lg.innerHTML = recent.length ? recent.map(m => `
+      <div class="log-row">
+        <div class="sign ${m.type}">${m.type==="sale"?"−":"+"}${m.qty}</div>
+        <div class="what"><b>${esc(m.code)}</b> ${esc(m.brand||"")}<small>${m.type==="sale"?"Продажа":"Приход"} · ${fmtDate(m.ts)}${m.car?" · "+esc(m.car):""}${m.note?" · "+esc(m.note):""}</small></div>
+        <div class="sum">${money(m.qty*m.price)}</div>
+        <button class="link undo" data-act="undo" data-id="${m.id}">Отменить</button>
+      </div>`).join("") : `<div class="empty" style="border:0">Продажи и приходы появятся здесь.</div>`;
+  }
+  const plural = (n,a,b,c) => { const m10=n%10, m100=n%100; return m10===1&&m100!==11?a:m10>=2&&m10<=4&&(m100<10||m100>=20)?b:c; };
+
+  ["#pMake","#pModel","#pYear","#pEngine","#q"].forEach(s => $(s).addEventListener("input", () => { if (s==="#pMake") fillLists(); render(); }));
+  $("#clearPick").onclick = () => { ["#pMake","#pModel","#pYear","#pEngine","#q"].forEach(s=>$(s).value=""); fillLists(); render(); };
+  document.querySelectorAll(".tab").forEach(b => b.onclick = () => {
+    if (b.dataset.stock){ ui.stock=!ui.stock; b.setAttribute("aria-pressed",ui.stock); }
+    else { ui.kind=b.dataset.kind; document.querySelectorAll(".tab[data-kind]").forEach(t=>t.setAttribute("aria-pressed", t===b)); }
+    render();
+  });
+
+  /* ---------- окна ---------- */
+  const modal = $("#modal");
+  const close = () => { modal.hidden = true; modal.innerHTML = ""; };
+  modal.addEventListener("click", e => { if (e.target === modal) close(); });
+  document.addEventListener("keydown", e => { if (e.key==="Escape" && !modal.hidden) close(); });
+  let toastT;
+  function toast(t){ const el=$("#toast"); el.textContent=t; el.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>el.hidden=true,2600); }
+
+  function moveDialog(f, type){
+    const sale = type==="sale";
+    const p = pick();
+    modal.innerHTML = `<form class="sheet" id="mvForm">
+      <h3>${sale?"Продажа":"Приход"} · <span style="font-family:var(--font-num)">${esc(f.code)}</span></h3>
+      <div class="meta">${f.brand?esc(f.brand)+" · ":""}сейчас на складе <b>${+f.qty||0}</b> шт.</div>
+      <div class="field"><label for="mvQty">Количество</label>
+        <div class="stepper"><button type="button" class="qbtn minus" id="mvDec">−</button><input class="inp" id="mvQty" type="number" min="1" value="1" inputmode="numeric"><button type="button" class="qbtn plus" id="mvInc">+</button></div></div>
+      <div class="row2">
+        <div class="field"><label for="mvPrice">Цена за шт., ֏</label><input class="inp" id="mvPrice" type="number" min="0" inputmode="numeric" value="${sale?(+f.sell||0):(+f.buy||0)}"></div>
+        ${sale?`<div class="field"><label for="mvCar">Машина клиента</label><input class="inp" id="mvCar" list="dlMakes" value="${esc(carActive(p)?carLabel(p):"")}" placeholder="Kia Rio 2016"></div>`
+              :`<div class="field"><label for="mvNote">Поставщик / заметка</label><input class="inp" id="mvNote" placeholder="Например, накладная 124"></div>`}
+      </div>
+      ${sale?`<div class="field"><label for="mvNote">Заметка</label><input class="inp" id="mvNote" placeholder="Госномер, имя клиента…"></div>`:""}
+      <p class="err" id="mvErr"></p>
+      <div class="actions"><button type="button" class="btn" id="mvCancel">Отмена</button><button class="btn primary" id="mvOk">${sale?"Продать и списать":"Добавить на склад"}</button></div>
+    </form>`;
+    modal.hidden = false;
+    const qi = $("#mvQty");
+    $("#mvDec").onclick = () => qi.value = Math.max(1,(+qi.value||1)-1);
+    $("#mvInc").onclick = () => qi.value = (+qi.value||0)+1;
+    $("#mvCancel").onclick = close;
+    qi.focus(); qi.select();
+    $("#mvForm").onsubmit = async e => {
+      e.preventDefault(); if (busy) return;
+      const n = parseInt(qi.value,10), price = +$("#mvPrice").value||0;
+      if (!(n>0)) { $("#mvErr").textContent="Укажите количество больше нуля."; return; }
+      busy = true; $("#mvOk").disabled = true;
+      try{
+        const cur = await freshQty(f.id);
+        if (cur===null) throw new Error("Этот фильтр уже удалён.");
+        if (sale && n>cur) { $("#mvErr").textContent=`На складе только ${cur} шт. Нельзя продать ${n}.`; return; }
+        const next = sale ? cur-n : cur+n;
+        await setQty(f.id, next);
+        await putMove({id:uid(), filterId:f.id, code:f.code, brand:f.brand, kind:f.kind||"oil", type, qty:n, price, cost:+f.buy||0, ts:Date.now(),
+          car: sale ? ($("#mvCar").value.trim()) : "", note:$("#mvNote").value.trim(), qtyAfter:next});
+        close(); toast(sale ? `Продано ${n} шт. ${f.code}. Осталось ${next}.` : `Принято ${n} шт. ${f.code}. Теперь ${next}.`);
+      }catch(err){ $("#mvErr").textContent = err.message || "Не удалось сохранить. Проверьте интернет и попробуйте ещё раз."; }
+      finally{ busy=false; const b=$("#mvOk"); if (b) b.disabled=false; }
+    };
+  }
+
+  function fitRowHtml(x={}){
+    return `<div class="fit-row">
+      <input class="inp" data-k="make" list="dlMakes" placeholder="Марка" value="${esc(x.make)}" aria-label="Марка">
+      <input class="inp" data-k="model" list="dlModels" placeholder="Модель" value="${esc(x.model)}" aria-label="Модель">
+      <input class="inp" data-k="yearFrom" type="number" inputmode="numeric" placeholder="Год с" value="${esc(x.yearFrom)}" aria-label="Год с">
+      <input class="inp" data-k="yearTo" type="number" inputmode="numeric" placeholder="по" value="${esc(x.yearTo)}" aria-label="Год по">
+      <input class="inp" data-k="engine" list="dlEngines" placeholder="Мотор" value="${esc(x.engine)}" aria-label="Мотор">
+      <button type="button" class="xbtn" data-del aria-label="Убрать машину">×</button>
+    </div>`;
+  }
+
+  /* ---------- автоподбор машин по артикулу ---------- */
+  function kindFromCode(code){
+    const c = String(code||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+    if (c.startsWith("AC")) return "cabin";
+    if (c.startsWith("OE") || c.startsWith("C")) return "oil";
+    if (c.startsWith("FE") || c.startsWith("FS") || c.startsWith("FC")) return "fuel";
+    if (c.startsWith("A")) return "air";
+    return "oil";
+  }
+  function gLinks(code){
+    const c = String(code||"").trim();
+    const q1 = encodeURIComponent(`JS Asakashi ${c} фильтр применяемость`);
+    const q2 = encodeURIComponent(`JS Asakashi ${c} filter fits`);
+    return `<a class="btn small glink" href="https://www.google.com/search?q=${q1}" target="_blank" rel="noopener">Google: ${esc(c)}</a>
+      <a class="btn small glink" href="https://www.google.com/search?q=${q2}" target="_blank" rel="noopener">Google (англ.)</a>`;
+  }
+
+  function editDialog(f){
+    const isNew = !f;
+    f = f || {id:uid(), code:"", brand:"JS", kind:"oil", qty:1, min:2, buy:0, sell:0, oem:"", analogs:"", shelf:"", fits:[]};
+    const fits = (f.fits && f.fits.length) ? f.fits : [];
+    modal.innerHTML = `<form class="sheet" id="edForm">
+      <h3>${isNew?"Новый фильтр":"Фильтр "+esc(f.code)}</h3>
+      <div class="row3">
+        <div class="field"><label for="edCode">Код фильтра</label><input class="inp" id="edCode" value="${esc(f.code)}" placeholder="C-110, OE-674, FE-…" autocomplete="off" style="font-family:var(--font-num);font-weight:700"></div>
+        <div class="field"><label for="edQty">Сколько штук</label><input class="inp" id="edQty" type="number" min="0" inputmode="numeric" value="${+f.qty||0}"></div>
+        <div class="field"><label for="edSell">Цена продажи, ֏</label><input class="inp" id="edSell" type="number" min="0" inputmode="numeric" value="${+f.sell||""}" placeholder="0"></div>
+      </div>
+      <div class="field">
+        <label>Подходит к машинам</label>
+        <div class="autobar"><span class="hint" id="edAutoMsg">Введите код и откройте Google — там видно, к каким машинам он подходит.</span>
+          <span class="glinks" id="edG"></span></div>
+        <div class="fit-head" ${fits.length?"":"hidden"} id="edHead"><span>Марка</span><span>Модель</span><span>Год с</span><span>по</span><span>Мотор</span><span></span></div>
+        <div class="fit-edit" id="edFits">${fits.map(fitRowHtml).join("")}</div>
+        <div><button type="button" class="btn small" id="edAddFit">+ Добавить машину</button></div>
+      </div>
+      <details class="more"${isNew?"":" open"}>
+        <summary>Бренд, тип, закупка, OEM, полка</summary>
+        <div class="more-body">
+          <div class="row3">
+            <div class="field"><label for="edBrand">Бренд (необязательно)</label><input class="inp" id="edBrand" value="${esc(f.brand)}" placeholder="JS"></div>
+            <div class="field"><label for="edKind">Тип</label><select class="inp" id="edKind">${Object.entries(KINDS).map(([k,v])=>`<option value="${k}" ${(f.kind||"oil")===k?"selected":""}>${v}</option>`).join("")}</select></div>
+            <div class="field"><label for="edBuy">Закупка, ֏</label><input class="inp" id="edBuy" type="number" min="0" inputmode="numeric" value="${+f.buy||""}" placeholder="0"></div>
+          </div>
+          <div class="row3">
+            <div class="field"><label for="edOem">OEM номер</label><input class="inp" id="edOem" value="${esc(f.oem)}" placeholder="15601-…"></div>
+            <div class="field"><label for="edAn">Аналоги</label><input class="inp" id="edAn" value="${esc(f.analogs)}" placeholder="через запятую"></div>
+            <div class="field"><label for="edMin">Мин. остаток</label><input class="inp" id="edMin" type="number" min="0" inputmode="numeric" value="${+f.min||0}"></div>
+          </div>
+          <div class="field"><label for="edShelf">Полка / место</label><input class="inp" id="edShelf" value="${esc(f.shelf)}" placeholder="A-3"></div>
+        </div>
+      </details>
+      <p class="err" id="edErr"></p>
+      <div class="actions">
+        ${isNew?"":`<button type="button" class="btn danger" id="edDel" style="margin-right:auto">Удалить</button>`}
+        <button type="button" class="btn" id="edCancel">Отмена</button>
+        <button class="btn primary" id="edOk">Сохранить</button>
+      </div>
+    </form>`;
+    modal.hidden = false;
+    const box = $("#edFits"), head = $("#edHead"), msg = $("#edAutoMsg"), codeIn = $("#edCode"), kindSel = $("#edKind");
+    let kindTouched = !isNew;
+    const syncHead = () => head.hidden = !box.children.length;
+    box.addEventListener("click", e => { if (e.target.closest("[data-del]")){ e.target.closest(".fit-row").remove(); syncHead(); }});
+    $("#edAddFit").onclick = () => { box.insertAdjacentHTML("beforeend", fitRowHtml()); syncHead(); box.lastElementChild.querySelector("input").focus(); };
+    kindSel.onchange = () => { kindTouched = true; };
+    codeIn.addEventListener("input", () => { if (!kindTouched) kindSel.value = kindFromCode(codeIn.value); });
+
+    const syncG = () => { const c = codeIn.value.trim(); $("#edG").innerHTML = c ? gLinks(c) : ""; };
+    codeIn.addEventListener("input", syncG); syncG();
+    $("#edCancel").onclick = close;
+    codeIn.focus();
+    if (!isNew){
+      let armed = false;
+      $("#edDel").onclick = async () => {
+        if (!armed){ armed=true; $("#edDel").textContent="Точно удалить?"; return; }
+        try{ await dropFilter(f.id); close(); toast(`Фильтр ${f.code} удалён.`); }
+        catch(err){ $("#edErr").textContent="Не удалось удалить. Попробуйте ещё раз."; }
+      };
+    }
+    $("#edForm").onsubmit = async e => {
+      e.preventDefault(); if (busy) return;
+      const code = codeIn.value.trim().toUpperCase();
+      if (!code){ $("#edErr").textContent="Введите код фильтра."; return; }
+      const dup = filters.find(x => x.id!==f.id && norm(x.code)===norm(code));
+      if (dup){ $("#edErr").textContent=`${dup.code} уже есть на складе. Закройте окно и нажмите «+» на его карточке.`; return; }
+      const fitsOut = [...box.querySelectorAll(".fit-row")].map(r => {
+        const o = {}; r.querySelectorAll("[data-k]").forEach(i => { const v=i.value.trim(); o[i.dataset.k] = (i.type==="number") ? (v?parseInt(v,10):null) : v; }); return o;
+      }).filter(o => o.make || o.model || o.engine);
+      const badYears = fitsOut.find(o => o.yearFrom && o.yearTo && o.yearFrom>o.yearTo);
+      if (badYears){ $("#edErr").textContent=`У ${fitText(badYears)||"машины"} год «с» больше года «по».`; return; }
+      const out = { ...f, code, brand:$("#edBrand").value.trim(), kind:kindSel.value,
+        oem:$("#edOem").value.trim(), analogs:$("#edAn").value.trim(), shelf:$("#edShelf").value.trim(),
+        qty:Math.max(0,parseInt($("#edQty").value,10)||0), min:Math.max(0,parseInt($("#edMin").value,10)||0),
+        buy:+$("#edBuy").value||0, sell:+$("#edSell").value||0, fits:fitsOut, fitsAuto:false, updatedAt:Date.now() };
+      delete out.example;
+      busy = true; $("#edOk").disabled = true;
+      try{
+        await putFilter(out); close(); toast(isNew?`Фильтр ${code} добавлен.`:`Фильтр ${code} сохранён.`);
+      }catch(err){ $("#edErr").textContent="Не удалось сохранить. Проверьте интернет и попробуйте ещё раз."; }
+      finally{ busy=false; const b=$("#edOk"); if (b) b.disabled=false; }
+    };
+  }
+
+  function undoDialog(m){
+    modal.innerHTML = `<div class="sheet">
+      <h3>Отменить ${m.type==="sale"?"продажу":"приход"}?</h3>
+      <div>${esc(m.code)} ${esc(m.brand||"")} · ${m.qty} шт. · ${fmtDate(m.ts)}</div>
+      <div class="meta">${m.type==="sale"?`${m.qty} шт. вернутся на склад.`:`${m.qty} шт. спишутся со склада.`}</div>
+      <p class="err" id="unErr"></p>
+      <div class="actions"><button class="btn" id="unNo">Нет</button><button class="btn primary" id="unYes">Да, отменить</button></div></div>`;
+    modal.hidden = false;
+    $("#unNo").onclick = close;
+    $("#unYes").onclick = async () => {
+      if (busy) return; busy = true;
+      try{
+        const cur = await freshQty(m.filterId);
+        if (cur!==null){
+          const next = m.type==="sale" ? cur+m.qty : cur-m.qty;
+          if (next<0){ $("#unErr").textContent=`На складе ${cur} шт., списать ${m.qty} не получится.`; return; }
+          await setQty(m.filterId, next);
+        }
+        await dropMove(m.id); close(); toast("Отменено.");
+      }catch(err){ $("#unErr").textContent="Не удалось отменить. Попробуйте ещё раз."; }
+      finally{ busy=false; }
+    };
+  }
+
+  $("#addBtn").onclick = () => editDialog(null);
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const act = b.dataset.act, id = b.dataset.id;
+    if (act==="undo"){ const m = moves.find(x=>x.id===id); if (m) undoDialog(m); return; }
+    const f = filters.find(x=>x.id===id); if (!f) return;
+    if (act==="edit") editDialog(f); else moveDialog(f, act);
+  });
+
+
+  /* ---------- демо ---------- */
+  function makeDemo(){
+    const F = (code,kind,qty,min,buy,sell,oem,analogs,shelf,fits) => ({id:"demo-"+code, code, brand:"JS", kind, qty, min, buy, sell, oem, analogs, shelf, fits});
+    const fit = (make,model,yearFrom,yearTo,engine) => ({make,model,yearFrom,yearTo,engine});
+    const fs = [
+      F("C110","oil",14,5,1300,2500,"90915-YZZE1","W 68/3, OC 217","A-1",[fit("Toyota","Camry",2006,2011,"2.4 2AZ-FE"),fit("Toyota","RAV4",2006,2012,"2.4 2AZ-FE"),fit("Toyota","Corolla",2007,2013,"1.6 1ZR-FE"),fit("Lexus","ES",2006,2012,"3.5 2GR-FE")]),
+      F("C307","oil",9,6,1400,2700,"26300-35505","W 811/80, OC 500","A-2",[fit("Hyundai","Sonata",2010,2014,"2.4 G4KJ"),fit("Hyundai","Tucson",2010,2015,"2.0 G4KD"),fit("Kia","Sportage",2010,2015,"2.0 G4KD"),fit("Kia","Optima",2010,2015,"2.4 G4KJ")]),
+      F("C932","oil",3,6,1200,2300,"26300-02503","W 67/2, OC 617","A-2",[fit("Hyundai","Accent",2005,2011,"1.6 G4ED"),fit("Kia","Rio",2005,2011,"1.6 G4ED"),fit("Hyundai","Getz",2002,2011,"1.4 G4EE")]),
+      F("C224","oil",11,4,1250,2400,"15208-65F0E","W 67/1, OC 196","A-3",[fit("Nissan","Qashqai",2007,2013,"2.0 MR20DE"),fit("Nissan","X-Trail",2007,2014,"2.5 QR25DE"),fit("Nissan","Tiida",2004,2012,"1.6 HR16DE")]),
+      F("C415","oil",0,3,1350,2600,"MD360935","W 610/3","A-3",[fit("Mitsubishi","Lancer",2007,2017,"2.0 4B11"),fit("Mitsubishi","Outlander",2006,2012,"2.4 4B12"),fit("Mitsubishi","ASX",2010,null,"1.8 4B10")]),
+      F("OE116","oil",7,3,1600,3200,"04152-31090","HU 6019 z","B-1",[fit("Toyota","Camry",2011,2017,"3.5 2GR-FE"),fit("Toyota","Highlander",2007,2019,"3.5 2GR-FE"),fit("Lexus","RX",2008,2015,"3.5 2GR-FE")]),
+      F("OE674","oil",5,3,1700,3300,"26320-2F000","HU 7023 z","B-1",[fit("Hyundai","Santa Fe",2009,2018,"2.2 CRDi D4HB"),fit("Kia","Sorento",2009,2018,"2.2 CRDi D4HB")]),
+      F("FE0042","fuel",2,2,3800,7500,"31922-2B900","PU 9001","C-1",[fit("Hyundai","Santa Fe",2012,2018,"2.2 CRDi D4HB"),fit("Kia","Sorento",2012,2018,"2.2 CRDi D4HB")])
+    ];
+    const now = Date.now(), H = 3600e3, by = c => fs.find(f=>f.code===c);
+    const mv = (code,type,qty,ago,car,note) => { const f = by(code); return {id:"demo-m"+code+ago, filterId:f.id, code, brand:"JS", kind:f.kind, type, qty, price:type==="sale"?f.sell:f.buy, cost:f.buy, ts:now-ago*H, car:car||"", note:note||""}; };
+    const ms = [
+      mv("C307","sale",1,1,"Kia Sportage 2013"), mv("C110","sale",2,2,"Toyota Camry 2009"), mv("C224","sale",1,3,"Nissan Qashqai 2011"),
+      mv("OE116","sale",1,26,"Lexus RX 2012"), mv("C932","sale",2,30,"Kia Rio 2010"), mv("C110","buy",10,50,"","Поставщик, накладная 118"),
+      mv("C415","sale",1,74,"Mitsubishi Lancer 2012"), mv("OE674","sale",1,98,"Hyundai Santa Fe 2015"), mv("C307","sale",2,120,"Hyundai Sonata 2012"),
+      mv("FE0042","sale",1,150,"Kia Sorento 2016"), mv("C224","sale",1,200,"Nissan X-Trail 2010"), mv("C110","sale",1,260,"Toyota RAV4 2010")
+    ];
+    return {filters:fs, moves:ms};
+  }
+  function setDemo(on){
+    demo = on;
+    if (on){ const d = makeDemo(); filters = d.filters; moves = d.moves; }
+    else { filters = real.filters; moves = real.moves; }
+    $("#demoBar").hidden = !on;
+    $("#demoBtn").textContent = on ? "Выйти из демо" : "Демо";
+    $("#demoBtn").setAttribute("aria-pressed", on);
+    fillLists(); render();
+  }
+  $("#demoBtn").onclick = () => setDemo(!demo);
+  $("#demoExit").onclick = () => setDemo(false);
+
+  /* ---------- отчёт и закупка ---------- */
+  let period = "day";
+  function periodStart(){
+    const d = new Date(); d.setHours(0,0,0,0);
+    if (period==="week") d.setDate(d.getDate()-6);
+    if (period==="month") d.setDate(d.getDate()-29);
+    return d.getTime();
+  }
+  const wantQty = f => Math.max(1,(+f.min||0)*2-(+f.qty||0));
+  function renderReport(){
+    const from = periodStart();
+    const sales = moves.filter(m => m.type==="sale" && m.ts>=from);
+    const rev = sales.reduce((s,m)=>s+m.qty*m.price,0);
+    const cost = sales.reduce((s,m)=>{ const c = m.cost ?? (filters.find(f=>f.id===m.filterId)||{}).buy ?? 0; return s+m.qty*(+c||0); },0);
+    $("#rRev").textContent = money(rev); $("#rProfit").textContent = money(rev-cost);
+    $("#rPcs").textContent = sales.reduce((s,m)=>s+m.qty,0);
+    const top = {}; sales.forEach(m => { top[m.code] = (top[m.code]||0) + m.qty; });
+    const t = Object.entries(top).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const max = t.length ? t[0][1] : 1;
+    $("#rTop").innerHTML = t.length ? t.map(([c,n]) => `<div class="bar-row"><span class="bar-code">${esc(c)}</span><span class="bar-track"><span class="bar-fill" style="width:${Math.max(6,n/max*100)}%"></span></span><b>${n}</b></div>`).join("")
+      : `<div class="hint">За этот период продаж нет.</div>`;
+    const need = filters.filter(f => (+f.qty||0) <= (+f.min||0)).sort((a,b)=>(+a.qty||0)-(+b.qty||0));
+    $("#reorderCount").textContent = need.length ? `${need.length} ${plural(need.length,"позиция","позиции","позиций")}` : "";
+    $("#reorder").innerHTML = need.length ? need.map(f => `
+      <div class="ro-row"><span class="code-s">${esc(f.code)}</span><span class="ro-left">${(+f.qty||0)<=0?"нет":"осталось "+(+f.qty)}</span><span class="ro-want">заказать <b>${wantQty(f)}</b></span></div>`).join("")
+      : `<div class="hint">Всего хватает. Сюда попадут фильтры, у которых остаток дошёл до минимума.</div>`;
+    $("#copyOrder").hidden = !need.length;
+  }
+  document.querySelectorAll(".ptab").forEach(b => b.onclick = () => { period = b.dataset.p; document.querySelectorAll(".ptab").forEach(x=>x.setAttribute("aria-pressed", x===b)); renderReport(); });
+  $("#copyOrder").onclick = async () => {
+    const need = filters.filter(f => (+f.qty||0) <= (+f.min||0));
+    const text = "Заказ фильтров:\n" + need.map(f => `${f.code}${f.brand?" "+f.brand:""} — ${wantQty(f)} шт.`).join("\n");
+    try{ await navigator.clipboard.writeText(text); toast("Список скопирован. Вставьте его в сообщение поставщику."); }
+    catch(e){ const ta = $("#orderText"); ta.value = text; ta.hidden = false; ta.select(); toast("Список выделен — скопируйте его вручную."); }
+  };
+
+  /* ---------- старт ---------- */
+  setDemo(true);
+})();
+</script>
+
+</body>
+</html>

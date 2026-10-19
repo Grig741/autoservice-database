@@ -153,6 +153,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 html[lang="hy"] .hero h1{font-size:56px}
 @media (max-width:960px){html[lang="hy"] .hero h1{font-size:42px}}
 @media (max-width:600px){html[lang="hy"] .hero h1{font-size:34px}html[lang="hy"] .h2{font-size:32px}}
+.pr-btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.pr-btns .btn{text-decoration:none}
 </style>
 </head>
 <body>
@@ -160,7 +162,7 @@ html[lang="hy"] .hero h1{font-size:56px}
 <header class="nav">
   <div class="wrap">
     <a class="logo" href="#top"><i><svg viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h12M4 10h12M4 14h7"/></svg></i><span data-t="brand">Журнал заявок</span></a>
-    <nav><a href="#features" data-t="nav_feat">Возможности</a><a href="#how" data-t="nav_how">Как начать</a><a href="#faq" data-t="nav_faq">Вопросы</a></nav>
+    <nav><a href="#features" data-t="nav_feat">Возможности</a><a href="#how" data-t="nav_how">Как начать</a><a href="#projects" data-t="nav_pr">Проекты</a><a href="#faq" data-t="nav_faq">Вопросы</a></nav>
     <div class="lang" role="group" aria-label="Language">
       <button type="button" data-lang="ru">RU</button><button type="button" data-lang="en">EN</button><button type="button" data-lang="hy">ՀՅ</button>
     </div>
@@ -268,6 +270,16 @@ html[lang="hy"] .hero h1{font-size:56px}
     </div>
   </section>
 
+  <section class="blk" id="projects">
+    <div class="wrap">
+      <h2 class="h2 reveal" data-t="pr_h">Мои проекты</h2>
+      <div class="steps">
+        <div class="step reveal"><b data-t="pr1_tag">ПРОЕКТ 1</b><h3 data-t="pr1_h">Журнал заявок</h3><p data-t="pr1_p">Клиенты, машины и VIN, работы, запчасти, цены закупки и продажи, прибыль.</p><p class="pr-btns"><a class="btn red" href="demo.html" data-t="open_demo">Открыть демо</a></p></div>
+        <div class="step reveal"><b data-t="pr2_tag">ПРОЕКТ 2</b><h3 data-t="pr2_h">Склад фильтров</h3><p data-t="pr2_p">Остатки фильтров, подбор по машине, продажа сразу списывает остаток, прибыль и список закупки.</p><p class="pr-btns"><a class="btn red" href="filters-demo.html" data-t="open_demo">Открыть демо</a><a class="btn line pr-buy" href="https://t.me/autoservice_databaase_bot?start=filters_ru" data-filters-bot target="_blank" rel="noopener" data-t="pr_buy">Заявка в Telegram</a></p></div>
+      </div>
+    </div>
+  </section>
+
   <section class="final" id="contact">
     <div class="wrap">
       <div>
@@ -301,6 +313,7 @@ var CONTACT = {
 
 var T = {
   ru: {
+    pr_h: 'Мои проекты', nav_pr: 'Проекты', pr1_tag: 'ПРОЕКТ 1', pr1_h: 'Журнал заявок', pr1_p: 'Клиенты, машины и VIN, работы, запчасти, цены закупки и продажи, прибыль.', pr2_tag: 'ПРОЕКТ 2', pr2_h: 'Склад фильтров', pr2_p: 'Остатки фильтров, подбор по машине, продажа сразу списывает остаток, прибыль и список закупки.', pr_buy: 'Заявка в Telegram',
     _title: 'Журнал заявок — программа для автосервиса',
     _desc: 'Клиенты, машины, VIN, запчасти, цены и прибыль в одном месте. Работает в браузере на компьютере и телефоне.',
     brand: 'Журнал заявок', nav_feat: 'Возможности', nav_how: 'Как начать', nav_faq: 'Вопросы', open_demo: 'Открыть демо',
@@ -339,6 +352,7 @@ var T = {
     alt_parts: 'Таблица запчастей с ценами и прибылью', alt_stats: 'Статистика: прибыль, выручка, заявки по статусам и источникам'
   },
   en: {
+    pr_h: 'My projects', nav_pr: 'Projects', pr1_tag: 'PROJECT 1', pr1_h: 'Service Log', pr1_p: 'Clients, cars and VIN, jobs, parts, purchase and selling prices, profit.', pr2_tag: 'PROJECT 2', pr2_h: 'Filter Stock', pr2_p: 'Filter stock, search by car, a sale deducts stock automatically, profit and a reorder list.', pr_buy: 'Request in Telegram',
     _title: 'Service Log — software for auto repair shops',
     _desc: 'Customers, cars, VINs, parts, prices and profit in one place. Runs in the browser on a computer or phone.',
     brand: 'Service Log', nav_feat: 'Features', nav_how: 'How to start', nav_faq: 'FAQ', open_demo: 'Open demo',
@@ -377,6 +391,7 @@ var T = {
     alt_parts: 'Parts table with prices and profit', alt_stats: 'Statistics: profit, revenue, jobs by status and source'
   },
   hy: {
+    pr_h: 'Իմ նախագծերը', nav_pr: 'Նախագծեր', pr1_tag: 'ՆԱԽԱԳԻԾ 1', pr1_h: 'Հայտերի մատյան', pr1_p: 'Հաճախորդներ, մեքենաներ և VIN, աշխատանքներ, պահեստամասեր, գնման և վաճառքի գներ, շահույթ։', pr2_tag: 'ՆԱԽԱԳԻԾ 2', pr2_h: 'Ֆիլտրերի պահեստ', pr2_p: 'Ֆիլտրերի մնացորդ, ընտրություն ըստ մեքենայի, վաճառքն ինքնաբերաբար նվազեցնում է մնացորդը, շահույթ և գնումների ցուցակ։', pr_buy: 'Հայտ Telegram-ում',
     _title: 'Հայտերի մատյան — ծրագիր ավտոսերվիսների համար',
     _desc: 'Հաճախորդներ, մեքենաներ, VIN, պահեստամասեր, գներ և շահույթ մեկ տեղում։ Աշխատում է բրաուզերում՝ համակարգչով և հեռախոսով։',
     brand: 'Հայտերի մատյան', nav_feat: 'Հնարավորություններ', nav_how: 'Ինչպես սկսել', nav_faq: 'Հարցեր', open_demo: 'Բացել դեմոն',
@@ -441,6 +456,7 @@ function setLang(l) {
 }
 
 function wireContacts() {
+  document.querySelectorAll('[data-filters-bot]').forEach(function (a) { a.href = 'https://t.me/autoservice_databaase_bot?start=filters_' + lang; });
   var bot = (CONTACT.telegramBot || '').replace(/^@/, '').trim();
   var wa = (CONTACT.whatsapp || '').replace(/\D/g, '');
   var ph = (CONTACT.phone || '').replace(/[^\d+]/g, '');

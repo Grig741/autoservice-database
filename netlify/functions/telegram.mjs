@@ -6,11 +6,14 @@
 //   ADMIN_ID        your Telegram id — leads and messages go there
 //   WEBHOOK_SECRET  any random string, e.g. svc_9f3k2m7q
 //   DEMO_URL        optional; by default <this site>/demo.html
+//   FILTERS_DEMO_URL optional; by default <this site>/filters-demo.html
 //
 // One-time setup after deploy: open in the browser
 //   https://<your-site>.netlify.app/.netlify/functions/telegram?setup=<WEBHOOK_SECRET>
 // It registers this URL as the bot's webhook.
 //
+// Projects: journal (start=site_ru|site_en|site_hy) and filters (start=filters or filters_ru|en|hy).
+// "Мои проекты" button lists both projects with their demo and request buttons.
 // Flow: visitor comes from the site (t.me/<bot>?start=site_ru|site_en|site_hy),
 // leaves a request (name → shop/city → phone → comment), it is sent to ADMIN_ID.
 // Other user messages are forwarded to ADMIN_ID. The admin answers with Reply
@@ -33,6 +36,12 @@ const TX = {
     ask_question: 'Напишите ваш вопрос одним сообщением — мы ответим здесь.',
     sent: 'Сообщение отправлено. Ответим здесь, как только сможем.',
     cancel: 'Хорошо, отменили. Напишите /start, чтобы начать заново.',
+    hello_filters: 'Здравствуйте! Это бот «Склада фильтров» — программы для учёта фильтров в автосервисе.\n\nПодбор фильтра по машине, продажа сразу списывает остаток, отчёт по прибыли и список закупки.\n\nОставьте заявку, и мы подключим склад для вашего сервиса.',
+    btn_projects: 'Мои проекты',
+    projects: 'Мои проекты для автосервисов:\n\n1. Журнал заявок — клиенты, машины и VIN, работы, запчасти, закупка и цена продажи.\n\n2. Склад фильтров — остатки фильтров, подбор по машине, продажи и прибыль, что докупить.\n\nВыберите проект: посмотрите демо или оставьте заявку.',
+    p_journal: 'Журнал заявок', p_filters: 'Склад фильтров',
+    demo_journal: 'Демо: Журнал заявок', demo_filters: 'Демо: Склад фильтров',
+    order_journal: 'Заявка: Журнал заявок', order_filters: 'Заявка: Склад фильтров',
   },
   en: {
     hello: 'Hello! This is the Service Log bot — software for auto repair shops.\n\nLeave a request and we’ll contact you, show you the app and set it up for your shop.',
@@ -47,6 +56,12 @@ const TX = {
     ask_question: 'Write your question in one message — we’ll reply here.',
     sent: 'Message sent. We’ll reply here as soon as we can.',
     cancel: 'OK, cancelled. Send /start to begin again.',
+    hello_filters: 'Hello! This is the Filter Stock bot — software for tracking filters in an auto repair shop.\n\nFind a filter by car, a sale deducts the stock automatically, profit report and a reorder list.\n\nLeave a request and we’ll set up the stock for your shop.',
+    btn_projects: 'My projects',
+    projects: 'My projects for auto repair shops:\n\n1. Service Log — clients, cars and VIN, jobs, parts, purchase and selling price.\n\n2. Filter Stock — filter stock, search by car, sales and profit, what to reorder.\n\nPick a project: open the demo or leave a request.',
+    p_journal: 'Service Log', p_filters: 'Filter Stock',
+    demo_journal: 'Demo: Service Log', demo_filters: 'Demo: Filter Stock',
+    order_journal: 'Request: Service Log', order_filters: 'Request: Filter Stock',
   },
   hy: {
     hello: 'Բարև Ձեզ։ Սա «Հայտերի մատյան» ծրագրի բոտն է՝ ծրագիր ավտոսերվիսների համար։\n\nԹողեք հայտ, և մենք կկապվենք ձեզ հետ, ցույց կտանք ծրագիրը և կկարգավորենք այն ձեր սերվիսի համար։',
@@ -61,6 +76,12 @@ const TX = {
     ask_question: 'Գրեք ձեր հարցը մեկ հաղորդագրությամբ՝ կպատասխանենք այստեղ։',
     sent: 'Հաղորդագրությունն ուղարկված է։ Կպատասխանենք այստեղ որքան հնարավոր է շուտ։',
     cancel: 'Լավ, չեղարկվեց։ Գրեք /start՝ նորից սկսելու համար։',
+    hello_filters: 'Բարև Ձեզ։ Սա «Ֆիլտրերի պահեստ» ծրագրի բոտն է՝ ավտոսերվիսում ֆիլտրերի հաշվառման համար։\n\nՖիլտրի ընտրություն ըստ մեքենայի, վաճառքն ինքնաբերաբար նվազեցնում է մնացորդը, շահույթի հաշվետվություն և գնումների ցուցակ։\n\nԹողեք հայտ, և մենք կմիացնենք պահեստը ձեր սերվիսի համար։',
+    btn_projects: 'Իմ նախագծերը',
+    projects: 'Իմ նախագծերը ավտոսերվիսների համար․\n\n1. Հայտերի մատյան՝ հաճախորդներ, մեքենաներ և VIN, աշխատանքներ, պահեստամասեր, գնման և վաճառքի գին։\n\n2. Ֆիլտրերի պահեստ՝ ֆիլտրերի մնացորդ, ընտրություն ըստ մեքենայի, վաճառք և շահույթ, ինչ գնել։\n\nԸնտրեք նախագիծը՝ դիտեք դեմոն կամ թողեք հայտ։',
+    p_journal: 'Հայտերի մատյան', p_filters: 'Ֆիլտրերի պահեստ',
+    demo_journal: 'Դեմո՝ Հայտերի մատյան', demo_filters: 'Դեմո՝ Ֆիլտրերի պահեստ',
+    order_journal: 'Հայտ՝ Հայտերի մատյան', order_filters: 'Հայտ՝ Ֆիլտրերի պահեստ',
   },
 };
 
@@ -85,12 +106,30 @@ function guessLang(u) {
   const c = (u.language_code || '').toLowerCase();
   return c.startsWith('hy') ? 'hy' : c.startsWith('en') ? 'en' : 'ru';
 }
-function menu(l) {
+const PRODUCTS = ['journal', 'filters'];
+function demoUrl(product) {
+  const base = globalThis.__origin || '';
+  if (product === 'filters') return env('FILTERS_DEMO_URL') || (base ? base + '/filters-demo.html' : '');
+  return env('DEMO_URL') || (base ? base + '/demo.html' : '');
+}
+const helloText = (l, product) => product === 'filters' ? TX[l].hello_filters : TX[l].hello;
+function menu(l, product = 'journal') {
   const t = TX[l];
-  const rows = [[{ text: t.btn_order, callback_data: 'order' }], [{ text: t.btn_question, callback_data: 'question' }]];
-  const demo = env('DEMO_URL') || (globalThis.__origin ? globalThis.__origin + '/demo.html' : '');
+  const rows = [[{ text: t.btn_order, callback_data: 'order_' + product }], [{ text: t.btn_question, callback_data: 'question' }]];
+  const demo = demoUrl(product);
   if (demo) rows.push([{ text: t.btn_demo, url: demo }]);
+  rows.push([{ text: t.btn_projects, callback_data: 'projects' }]);
   rows.push([{ text: 'RU', callback_data: 'lang_ru' }, { text: 'EN', callback_data: 'lang_en' }, { text: 'ՀՅ', callback_data: 'lang_hy' }]);
+  return { inline_keyboard: rows };
+}
+function projectsMenu(l) {
+  const t = TX[l], rows = [];
+  for (const p of PRODUCTS) {
+    const demo = demoUrl(p);
+    if (demo) rows.push([{ text: t['demo_' + p], url: demo }]);
+    rows.push([{ text: t['order_' + p], callback_data: 'order_' + p }]);
+  }
+  rows.push([{ text: t.btn_question, callback_data: 'question' }]);
   return { inline_keyboard: rows };
 }
 const say = (chat_id, text, reply_markup) => tg('sendMessage', reply_markup ? { chat_id, text, reply_markup } : { chat_id, text });
@@ -106,9 +145,14 @@ async function onUpdate(up) {
     const s = await loadState(u.id); const l = TX[s.lang] ? s.lang : guessLang(u);
     if (q.data.startsWith('lang_')) {
       s.lang = q.data.slice(5); await saveState(u.id, s);
-      return say(chat, TX[s.lang].hello, menu(s.lang));
+      return say(chat, helloText(s.lang, s.product), menu(s.lang, s.product || 'journal'));
     }
-    if (q.data === 'order') { s.lang = l; s.step = 'name'; s.lead = {}; await saveState(u.id, s); return say(chat, TX[l].ask_name); }
+    if (q.data === 'projects') { s.lang = l; await saveState(u.id, s); return say(chat, TX[l].projects, projectsMenu(l)); }
+    if (q.data === 'order' || q.data.startsWith('order_')) {
+      const p = PRODUCTS.includes(q.data.slice(6)) ? q.data.slice(6) : (s.product || 'journal');
+      s.lang = l; s.product = p; s.step = 'name'; s.lead = { product: p }; await saveState(u.id, s);
+      return say(chat, TX[l].ask_name);
+    }
     if (q.data === 'question') { s.lang = l; s.step = null; await saveState(u.id, s); return say(chat, TX[l].ask_question); }
     return;
   }
@@ -132,10 +176,13 @@ async function onUpdate(up) {
   if (text.startsWith('/start')) {
     const arg = text.split(/\s+/)[1] || '';
     const fromSite = /^site_(ru|en|hy)$/.exec(arg);
-    s.lang = fromSite ? fromSite[1] : (TX[s.lang] ? s.lang : guessLang(u));
+    const fromFilters = /^filters(?:_(ru|en|hy))?$/.exec(arg);
+    const argLang = fromSite ? fromSite[1] : fromFilters ? fromFilters[1] : null;
+    s.lang = argLang || (TX[s.lang] ? s.lang : guessLang(u));
+    s.product = fromFilters ? 'filters' : 'journal';
     s.step = null; s.lead = null; await saveState(u.id, s);
-    await say(chat, TX[s.lang].hello, menu(s.lang));
-    if (u.id !== ADMIN) await say(ADMIN, `Новый посетитель в боте${fromSite ? ` (с сайта, ${arg})` : ''}: ${who(u)}`);
+    await say(chat, helloText(s.lang, s.product), menu(s.lang, s.product));
+    if (u.id !== ADMIN) await say(ADMIN, `Новый посетитель в боте${arg ? ` (${fromFilters ? 'Склад фильтров' : 'Журнал заявок'}, ${arg})` : ''}: ${who(u)}`);
     return;
   }
   const l = TX[s.lang] ? s.lang : guessLang(u);
@@ -155,6 +202,7 @@ async function onUpdate(up) {
     const lead = s.lead || {}; const note = text === TX[l].btn_skip ? '' : text;
     s.step = null; s.lead = null; await saveState(u.id, s);
     await say(ADMIN, '🟥 НОВАЯ ЗАЯВКА\n\n' +
+      `Проект: ${lead.product === 'filters' ? 'Склад фильтров' : 'Журнал заявок'}\n` +
       `Имя: ${lead.name || '-'}\nСервис / город: ${lead.shop || '-'}\nТелефон: ${lead.phone || '-'}\nКомментарий: ${note || '-'}\nЯзык: ${l}\n\n` +
       `Telegram: ${who(u)}\nОтветьте на это сообщение (Reply), и ответ уйдёт клиенту.`);
     return say(chat, TX[l].done, removeKb);
